@@ -23,10 +23,10 @@ client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
 # DB CONNECTION
 def get_db_connection():
     return mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="Naveen@12345",
-        database="akki"
+        host="srv1408.hstgr.io",
+        user="u372412767_akkiuser",
+        password="Akki@2026Secure#552",
+        database="u372412767_akki"
     )
 
 # ================= HOME =================
