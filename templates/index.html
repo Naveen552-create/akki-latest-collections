@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Akki Latest Collection</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <style>
+        /* RESET */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: #f5fdf7;
+        }
+
+        /* NAVBAR */
+        .navbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 25px;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            position: relative;
+            z-index: 1000;
+            /* ADD THIS */
+        }
+
+        /* LEFT */
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #1b8f4b;
+            font-weight: 600;
+        }
+
+        .logo img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #1b8f4b;
+        }
+
+        /* MENU CENTER */
+        .nav-links {
+            display: flex;
+            gap: 25px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .nav-links a:hover {
+            color: #1b8f4b;
+        }
+
+        /* RIGHT ICONS */
+        .nav-icons {
+            display: flex;
+            gap: 18px;
+        }
+
+        .nav-icons i {
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .nav-icons i:hover {
+            color: #1b8f4b;
+        }
+
+        /* MENU BUTTON (HIDDEN IN DESKTOP) */
+        .menu-btn {
+            display: none;
+        }
+
+        /* CLOSE BUTTON */
+        .close-menu {
+            display: none;
+        }
+
+        /* SEARCH POPUP */
+        .search-popup {
+            position: fixed;
+            top: -100%;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: 0.4s;
+            z-index: 3000;
+            /* ADD THIS */
+        }
+
+        .search-popup.active {
+            top: 0;
+        }
+
+        .search-box-popup {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-box-popup input {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+
+        /* ================= MOBILE ================= */
+        @media(max-width:900px) {
+
+            /* SHOW MENU BUTTON */
+            .menu-btn {
+                display: block;
+                font-size: 22px;
+                cursor: pointer;
+                margin-right: 10px;
+            }
+
+            /* LEFT SECTION */
+            .left-section {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            /* FIX NAVBAR */
+            .navbar {
+                justify-content: space-between;
+            }
+
+            /* HIDE CENTER MENU */
+            .nav-links {
+                position: fixed;
+                top: 0;
+                left: -100%;
+                transform: none;
+                width: 75%;
+                height: 100%;
+                background: white;
+                flex-direction: column;
+                padding: 60px 25px;
+                transition: 0.4s;
+                z-index: 1000;
+            }
+
+            .nav-links.active {
+                left: 0;
+            }
+
+            .nav-links a {
+                padding: 12px 0;
+                border-bottom: 1px solid #eee;
+            }
+
+            /* CLOSE BUTTON */
+            .close-menu {
+                display: block;
+                position: absolute;
+                top: 15px;
+                right: 20px;
+                font-size: 22px;
+                cursor: pointer;
+            }
+
+            /* LOGO CENTER */
+            .logo {
+                margin: auto;
+            }
+        }
+
+        /* ================= CAROUSEL ================= */
+       
+    .carousel {
+    width: 100%;
+    height: 1000px;
+    overflow: hidden;
+    position: relative;
+    background: #fff;
+}
+
+.slides {
+    display: flex;
+    height: 100%;
+    transition: transform 1s ease-in-out;
+}
+
+.slide {
+    min-width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: fill;   /* full cover without white space */
+    object-position: center top;
+    display: block;
+}
+
+/* buttons */
+.prev,
+.next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0,0,0,0.4);
+    color: white;
+    border: none;
+    padding: 12px 18px;
+    cursor: pointer;
+    font-size: 24px;
+    border-radius: 50%;
+    z-index: 10;
+}
+
+.prev { left: 15px; }
+.next { right: 15px; }
+
+.prev:hover,
+.next:hover {
+    background: #1b8f4b;
+}
+
+/* mobile */
+@media(max-width:768px){
+    .carousel{
+        height:250px;
+    }
+
+    .prev,.next{
+        padding:8px 12px;
+        font-size:18px;
+    }
+}
+
+
+        /* AUTO MOVE LEFT & RIGHT */
+        @keyframes slideMove {
+
+            0% {
+                transform: translateX(0);
+            }
+
+            30% {
+                transform: translateX(0);
+            }
+
+            35% {
+                transform: translateX(-100%);
+            }
+
+            65% {
+                transform: translateX(-100%);
+            }
+
+            70% {
+                transform: translateX(-200%);
+            }
+
+            100% {
+                transform: translateX(-200%);
+            }
+        }
+
+
+        /* DROPDOWN */
+        .dropdown {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .dropdown span {
+            font-weight: 500;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 35px;
+            left: 0;
+            background: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+            display: none;
+            flex-direction: column;
+            min-width: 200px;
+            z-index: 2000;
+            /* ADD THIS */
+        }
+
+        .dropdown-menu a {
+            padding: 10px;
+            text-decoration: none;
+            color: #333;
+            border-bottom: 1px solid #eee;
+        }
+
+        .dropdown-menu a:hover {
+            background: #f5fdf7;
+            color: #1b8f4b;
+        }
+
+        /* SHOW DROPDOWN ON HOVER (DESKTOP) */
+        .dropdown:hover .dropdown-menu {
+            display: flex;
+        }
+
+        .nav-icons{
+    display:flex;
+    align-items:center;
+    gap:18px;
+}
+
+.nav-icons i{
+    font-size:20px;
+    cursor:pointer;
+}
+
+.user-name{
+    color:#1b8f4b;
+    font-weight:600;
+    font-size:15px;
+    padding:6px 12px;
+    background:#eefaf2;
+    border-radius:20px;
+}
+
+.cart-box{
+    position:relative;
+    color:black;
+    text-decoration:none;
+    font-size:22px;
+}
+
+.cart-count{
+    position:absolute;
+    top:-8px;
+    right:-12px;
+    background:red;
+    color:white;
+    font-size:12px;
+    width:20px;
+    height:20px;
+    border-radius:50%;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-weight:bold;
+}
+
+.logout-btn{
+    color:red;
+    font-size:20px;
+    text-decoration:none;
+}
+
+.logout-btn:hover{
+    color:darkred;
+}
+
+        /* MOBILE FIX */
+        @media(max-width:900px) {
+
+            .dropdown-menu {
+                position: static;
+                box-shadow: none;
+                display: none;
+            }
+
+            .dropdown.active .dropdown-menu {
+                display: flex;
+            }
+        }
+
+        /* ================= PRODUCTS ================= */
+
+        .products-section {
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .products-section h2 {
+            margin-bottom: 30px;
+            color: #1b8f4b;
+        }
+
+        /* DESKTOP → 4 FIXED CARDS */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        /* CARD */
+        .card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: 0.3s;
+            width: 100%;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        /* FIX IMAGE SIZE */
+        .card img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+        }
+
+        .card-content {
+            padding: 15px;
+        }
+
+        .card-content h3 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .card-content p {
+            font-size: 14px;
+            color: #777;
+            margin-bottom: 10px;
+        }
+
+        /* BUTTON */
+        .card-content button {
+            width: 100%;
+            padding: 10px;
+            font-size: 14px;
+            border: none;
+            background: linear-gradient(45deg, #1b8f4b, #28c76f);
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .card-content button:hover {
+            background: #146c38;
+        }
+
+        /* ================= TABLET ================= */
+
+        @media(max-width:992px) {
+
+            .product-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        /* ================= MOBILE ================= */
+
+        @media(max-width:768px) {
+
+            /* FIX 2 CARDS EACH ROW */
+            .product-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+
+            .products-section {
+                padding: 25px 10px;
+            }
+
+            .products-section h2 {
+                font-size: 22px;
+            }
+
+            /* FIX CARD SIZE */
+            .card {
+                border-radius: 10px;
+            }
+
+            .card img {
+                height: 160px;
+            }
+
+            .card-content {
+                padding: 10px;
+            }
+
+            .card-content h3 {
+                font-size: 14px;
+            }
+
+            .card-content p {
+                font-size: 12px;
+            }
+
+            .card-content button {
+                padding: 7px;
+                font-size: 12px;
+            }
+        }
+
+        /* VERY SMALL MOBILE */
+        @media(max-width:480px) {
+
+            .product-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .card img {
+                height: 140px;
+            }
+        }
+
+
+        .login-popup{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.7);
+    display:none;
+    justify-content:center;
+    align-items:center;
+    z-index:5000;
+}
+
+.login-box{
+    width:350px;
+    background:white;
+    padding:30px;
+    border-radius:12px;
+    text-align:center;
+}
+
+.login-box input{
+    width:100%;
+    padding:12px;
+    margin:10px 0;
+    border:1px solid #ddd;
+}
+
+.login-box button{
+    width:100%;
+    padding:12px;
+    background:#1b8f4b;
+    color:white;
+    border:none;
+    cursor:pointer;
+}
+
+.popup-overlay{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.65);
+    display:none;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    animation:fadeIn 0.4s;
+}
+
+.popup-box{
+    width:380px;
+    background:#fff;
+    padding:35px;
+    border-radius:18px;
+    position:relative;
+    text-align:center;
+    box-shadow:0 15px 35px rgba(0,0,0,0.2);
+    animation:popup 0.4s ease;
+}
+
+.popup-box h2{
+    color:#1b8f4b;
+    margin-bottom:20px;
+}
+
+.popup-box input{
+    width:100%;
+    padding:14px;
+    margin:10px 0;
+    border:1px solid #ddd;
+    border-radius:10px;
+    outline:none;
+}
+
+.popup-box input:focus{
+    border-color:#1b8f4b;
+}
+
+.popup-box button{
+    width:100%;
+    padding:14px;
+    border:none;
+    background:linear-gradient(45deg,#1b8f4b,#28c76f);
+    color:white;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:16px;
+}
+
+.popup-box button:hover{
+    opacity:0.9;
+}
+
+.close-btn{
+    position:absolute;
+    top:12px;
+    right:18px;
+    font-size:24px;
+    cursor:pointer;
+    color:#999;
+}
+
+.close-btn:hover{
+    color:red;
+}
+
+.popup-links{
+    margin-top:15px;
+    display:flex;
+    justify-content:space-between;
+}
+
+.popup-links a{
+    color:#1b8f4b;
+    cursor:pointer;
+    font-size:14px;
+}
+
+
+
+
+/* FOOTER */
+.footer{
+    background:#0f2f1d;
+    color:white;
+    margin-top:70px;
+    padding-top:55px;
+}
+
+.footer-container{
+    width:90%;
+    margin:auto;
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:35px;
+    padding-bottom:40px;
+}
+
+.footer-col h4{
+    margin-bottom:18px;
+    color:#28c76f;
+    font-size:18px;
+}
+
+.footer-col p{
+    color:#ddd;
+    line-height:1.8;
+    font-size:14px;
+}
+
+.footer-col a{
+    display:block;
+    color:#ddd;
+    text-decoration:none;
+    margin-bottom:10px;
+    transition:.3s;
+}
+
+.footer-col a:hover{
+    color:#28c76f;
+    padding-left:6px;
+}
+
+.footer-logo{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:18px;
+}
+
+.footer-logo img{
+    width:55px;
+    height:55px;
+    border-radius:50%;
+    border:3px solid #28c76f;
+}
+
+.footer-logo h3{
+    color:#28c76f;
+    font-size:20px;
+}
+
+.social-icons{
+    margin-top:18px;
+    display:flex;
+    gap:12px;
+}
+
+.social-icons a{
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    background:#1b8f4b;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:white;
+    transition:.3s;
+}
+
+.social-icons a:hover{
+    background:#28c76f;
+    transform:translateY(-5px);
+}
+
+.footer-bottom{
+    text-align:center;
+    border-top:1px solid rgba(255,255,255,0.15);
+    padding:18px;
+    font-size:14px;
+    color:#ccc;
+}
+
+
+/* PREMIUM PROCESS SECTION */
+.premium-process{
+    width:100%;
+    padding:80px 20px;
+    background:linear-gradient(135deg,#eefaf2,#f8fff9);
+    text-align:center;
+    position:relative;
+    overflow:hidden;
+}
+
+/* heading */
+.process-heading h2{
+    font-size:48px;
+    color:#14532d;
+    font-weight:700;
+    margin-bottom:10px;
+    letter-spacing:1px;
+}
+
+.process-heading p{
+    font-size:20px;
+    color:#1b8f4b;
+    margin-bottom:45px;
+    font-weight:500;
+}
+
+/* image highlight box */
+.process-image-box{
+    width:92%;
+    max-width:1500px;
+    margin:auto;
+    border-radius:25px;
+    overflow:hidden;
+    position:relative;
+    box-shadow:
+        0 20px 60px rgba(27,143,75,0.18),
+        0 0 35px rgba(40,199,111,0.12);
+    transition:.5s;
+    border:4px solid rgba(40,199,111,0.15);
+}
+
+/* glowing effect */
+.process-image-box::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    background:linear-gradient(
+        120deg,
+        transparent,
+        rgba(255,255,255,0.35),
+        transparent
+    );
+    transform:translateX(-100%);
+    animation:shine 4s infinite;
+    z-index:2;
+}
+
+.process-image-box:hover{
+    transform:translateY(-12px) scale(1.01);
+    box-shadow:
+        0 30px 80px rgba(27,143,75,0.28),
+        0 0 45px rgba(40,199,111,0.18);
+}
+
+.process-image-box img{
+    width:100%;
+    display:block;
+    object-fit:cover;
+}
+
+/* bottom premium text */
+.process-bottom-text{
+    margin-top:35px;
+    font-size:30px;
+    color:#14532d;
+    font-weight:700;
+    letter-spacing:1px;
+    position:relative;
+}
+
+.process-bottom-text::before,
+.process-bottom-text::after{
+    content:"✦";
+    color:#28c76f;
+    margin:0 18px;
+}
+
+/* shine animation */
+@keyframes shine{
+    100%{
+        transform:translateX(100%);
+    }
+}
+
+/* MOBILE */
+@media(max-width:768px){
+
+    .premium-process{
+        padding:45px 12px;
+    }
+
+    .process-heading h2{
+        font-size:28px;
+    }
+
+    .process-heading p{
+        font-size:15px;
+        margin-bottom:25px;
+    }
+
+    .process-image-box{
+        width:100%;
+        border-radius:16px;
+    }
+
+    .process-bottom-text{
+        font-size:18px;
+        margin-top:20px;
+    }
+}
+
+/* MOBILE */
+@media(max-width:992px){
+    .footer-container{
+        grid-template-columns:repeat(2,1fr);
+    }
+}
+
+@media(max-width:768px){
+    .footer-container{
+        grid-template-columns:1fr;
+        text-align:center;
+    }
+
+    .footer-logo{
+        justify-content:center;
+    }
+
+    .social-icons{
+        justify-content:center;
+    }
+}
+
+
+
+
+@keyframes popup{
+    from{
+        transform:scale(.7);
+        opacity:0;
+    }
+    to{
+        transform:scale(1);
+        opacity:1;
+    }
+}
+
+@keyframes fadeIn{
+    from{opacity:0;}
+    to{opacity:1;}
+}
+
+
+/* MOBILE */
+@media(max-width:768px){
+
+    .footer-top{
+        flex-direction:column;
+        align-items:center;
+        text-align:center;
+    }
+
+    .footer-bottom{
+        flex-direction:column;
+        text-align:center;
+    }
+
+    .footer-bottom .center-text{
+        flex:none;
+    }
+}
+
+    </style>
+
+
+
+</head>
+
+<body>
+
+    <!-- SEARCH -->
+    <div class="search-popup" id="searchPopup">
+        <div class="search-box-popup">
+            <input type="text" placeholder="Search...">
+            <i class="fa fa-times" onclick="closeSearch()"></i>
+        </div>
+    </div>
+
+
+<!-- LOGIN POPUP -->
+<div class="popup-overlay" id="loginPopup">
+    <div class="popup-box">
+
+        <span class="close-btn" onclick="closePopup('loginPopup')">&times;</span>
+
+        <h2><i class="fa fa-user-circle"></i> Login</h2>
+
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
+
+        <button onclick="loginUser()">Login</button>
+
+        <div class="popup-links">
+            <a onclick="openPopup('forgotPopup')">Forgot Password?</a>
+            <a onclick="openPopup('registerPopup')">Create Account</a>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- FORGOT PASSWORD -->
+<div class="popup-overlay" id="forgotPopup">
+    <div class="popup-box">
+
+        <span class="close-btn" onclick="closePopup('forgotPopup')">&times;</span>
+
+        <h2>Update Password</h2>
+
+        <input type="text" id="fuser" placeholder="Username">
+        <input type="password" id="newpass" placeholder="New Password">
+
+        <button onclick="updatePassword()">Update</button>
+
+    </div>
+</div>
+
+
+<!-- REGISTER -->
+<div class="popup-overlay" id="registerPopup">
+    <div class="popup-box">
+
+        <span class="close-btn" onclick="closePopup('registerPopup')">&times;</span>
+
+        <h2>Create Account</h2>
+
+        <input type="text" id="ruser" placeholder="Username">
+        <input type="password" id="rpass" placeholder="Password">
+
+        <button onclick="registerUser()">Register</button>
+
+    </div>
+</div>
+
+
+
+  
+<!-- NAVBAR -->
+<div class="navbar">
+
+    <!-- LEFT -->
+    <div class="left-section">
+        <div class="menu-btn" id="menuBtn" onclick="toggleMenu()">
+            <i class="fa fa-bars"></i>
+        </div>
+
+        <div class="logo">
+            <img src="{{ url_for('static', filename='image/logo1.png') }}">
+            Akki Latest Collection
+        </div>
+    </div>
+
+
+    <!-- CENTER MENU -->
+    <div class="nav-links" id="navLinks">
+
+
+        <div class="close-menu" onclick="toggleMenu()">
+                <i class="fa fa-times"></i>
+            </div>
+
+            <a href="#">Home</a>
+
+            <!-- Dress Material -->
+            <div class="dropdown">
+                <span>Dress Material <i class="fa fa-chevron-down"></i></span>
+                <div class="dropdown-menu">
+                    <a href="#">Mangalagiri Pattu</a>
+                    <a href="#">Mangalagiri Cotton</a>
+                    <a href="#">Chandri Silk</a>
+                    <a href="#">Jam Damni</a>
+                    <a href="#">Kota Cloth</a>
+                    <a href="#">Kunchali Cloth</a>
+                    <a href="#">Model Print Cloth</a>
+                    <a href="#">Chennalumi Silk</a>
+                    <a href="#">South Silk</a>
+                    <a href="#">Tissue</a>
+                    <a href="#">Sico</a>
+                    <a href="#">Card Sets</a>
+                </div>
+            </div>
+
+            <!-- Sarees -->
+            <div class="dropdown">
+                <span>Sarees <i class="fa fa-chevron-down"></i></span>
+                <div class="dropdown-menu">
+                    <a href="#">Geo Sarees</a>
+                    <a href="#">Kalhi Sarees</a>
+                    <a href="#">Klot Cloth</a>
+                    <a href="#">Pure Cloth</a>
+                    <a href="#">Lenovo Dram</a>
+                    <a href="#">Varmu</a>
+                    <a href="#">Pochampally</a>
+                    <a href="#">Pamul</a>
+                </div>
+            </div>
+
+            <!-- Readymade -->
+            <div class="dropdown">
+                <span>Readymade <i class="fa fa-chevron-down"></i></span>
+                <div class="dropdown-menu">
+                    <a href="#">Macharli</a>
+                    <a href="#">Chandra Wear</a>
+                    <a href="#">Pure Cloth</a>
+                </div>
+            </div>
+
+            <!-- Frocks -->
+            <div class="dropdown">
+                <span>Frocks <i class="fa fa-chevron-down"></i></span>
+                <div class="dropdown-menu">
+                    <a href="#">Silk Frocks</a>
+                    <a href="#">Raw Cloth</a>
+                    <a href="#">Fancy Frocks</a>
+                </div>
+            </div>
+
+            <!-- Bedsheets -->
+            <div class="dropdown">
+                <span>Bedsheets <i class="fa fa-chevron-down"></i></span>
+                <div class="dropdown-menu">
+                    <a href="#">Printed Bedsheets</a>
+                    <a href="#">Pure Cotton</a>
+                    <a href="#">Raw Cloth</a>
+                </div>
+            </div>
+
+            <!-- Nightwear -->
+            <a href="#">Nightwear</a>
+
+            <!-- Dupattas -->
+            <div class="dropdown">
+                <span>Dupattas <i class="fa fa-chevron-down"></i></span>
+                <div class="dropdown-menu">
+                    <a href="#">Mach Darchur</a>
+                    <a href="#">Silk Dupattas</a>
+                </div>
+            </div>
+
+        </div>
+
+       
+
+
+    <!-- RIGHT -->
+    <div class="nav-icons">
+
+        <!-- SEARCH -->
+        <i class="fa fa-search" onclick="openSearch()"></i>
+
+        {% if session.get('user') %}
+
+            <!-- USERNAME -->
+            <span class="user-name">
+                {{ session['user'] }}
+            </span>
+
+            <!-- LOGOUT -->
+            <a href="/logout" class="logout-btn">
+                <i class="fa fa-sign-out-alt"></i>
+            </a>
+
+        {% else %}
+
+            <!-- LOGIN -->
+            <i class="fa fa-user"
+               onclick="openPopup('loginPopup')"></i>
+
+        {% endif %}
+
+        <!-- CART -->
+<a href="/cart" class="cart-box">
+    <i class="fa fa-shopping-cart"></i>
+
+    {% if cart_count|default(0) > 0 %}
+    <span class="cart-count">
+        {{ cart_count }}
+    </span>
+    {% endif %}
+</a>
+
+    </div>
+
+</div>
+
+
+
+    <!-- CAROUSEL -->
+    <div class="carousel">
+
+        <!-- SLIDES -->
+        <div class="slides" id="slides">
+
+            {% for item in carousel_items %}
+            <div class="slide">
+                <img src="{{ url_for('static', filename=item.image) }}" alt="">
+            </div>
+            {% endfor %}
+
+        </div>
+
+        <!-- PREVIOUS BUTTON -->
+        <button class="prev" onclick="prevSlide()">❮</button>
+
+        <!-- NEXT BUTTON -->
+        <button class="next" onclick="nextSlide()">❯</button>
+
+    </div>
+
+    <!-- PRODUCTS -->
+<div class="products-section">
+    <h2>Latest Collection</h2>
+
+    <div class="product-grid">
+        {% for product in products %}
+        <div class="card">
+
+            {% if product.images %}
+                <img src="{{ url_for('static', filename=product.images[0]) }}">
+            {% endif %}
+
+            <div class="card-content">
+                <h3>{{ product.category }}</h3>
+                <p>{{ product.subcategory }}</p>
+
+                <a href="/product/{{ product.id }}">
+    <button>
+        Click Here
+    </button>
+</a>
+            </div>
+
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+
+
+<!-- PREMIUM SAREE PROCESS SECTION -->
+<section class="premium-process">
+
+    <div class="process-heading">
+        <h2>The Journey of a Saree</h2>
+        <p>Crafted with Tradition, Woven with Love</p>
+    </div>
+
+    <div class="process-image-box">
+        <img src="{{ url_for('static', filename='image/displayimage.png') }}">
+    </div>
+
+    <div class="process-bottom-text">
+        From Our Hands to Your Heart
+    </div>
+
+</section>
+
+
+<!-- FOOTER -->
+<footer class="footer">
+
+    <div class="footer-container">
+
+        <!-- COLUMN 1 -->
+        <div class="footer-col">
+            <div class="footer-logo">
+                <img src="{{ url_for('static', filename='image/logo1.png') }}">
+                <h3>Akki Latest Collections</h3>
+            </div>
+
+            <p>
+                Premium fashion collections with elegant designs,
+                latest sarees, dress materials and readymade wear.
+            </p>
+        </div>
+
+        <!-- COLUMN 2 -->
+        <div class="footer-col">
+            <h4>Quick Links</h4>
+
+            <a href="#">Home</a>
+            <a href="#">Dress Material</a>
+            <a href="#">Sarees</a>
+            <a href="#">Readymade</a>
+            <a href="#">Frocks</a>
+            <a href="#">Bedsheets</a>
+        </div>
+
+        <!-- COLUMN 3 -->
+        <div class="footer-col">
+            <h4>Address</h4>
+
+            <p>Akki Latest Collections</p>
+            <p>C/O Palangi DTDC</p>
+            <p>E.G.DT, A.P - 534216</p>
+            <p>Andhra Pradesh</p>
+        </div>
+
+        <!-- COLUMN 4 -->
+        <div class="footer-col">
+            <h4>Contact Us</h4>
+
+            <p><i class="fa fa-phone"></i> 8247025557</p>
+            <p><i class="fa fa-envelope"></i> support@akki.com</p>
+
+            <div class="social-icons">
+                <a href="#"><i class="fab fa-facebook-f"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+                <a href="#"><i class="fab fa-whatsapp"></i></a>
+                <a href="#"><i class="fab fa-youtube"></i></a>
+            </div>
+        </div>
+
+    </div>
+
+<div class="footer-bottom"
+     style="
+        text-align:center;
+        border-top:1px solid rgba(255,255,255,0.15);
+        padding:18px;
+        font-size:14px;
+        color:#ccc;
+        background:#0b2416;
+        font-weight:500;
+     ">
+
+    © 2026 Akki Latest Collections | All Rights Reserved |
+    <span style="color:#28c76f;">
+        EMMI Institute Private Limited - Tadepalligudem
+    </span>
+
+</div>
+
+</footer>
+
+
+
+    <script>
+
+        /* MENU */
+        function toggleMenu() {
+            let nav = document.getElementById("navLinks");
+            let icon = document.querySelector("#menuBtn i");
+
+            nav.classList.toggle("active");
+
+            if (nav.classList.contains("active")) {
+                icon.className = "fa fa-times";
+            } else {
+                icon.className = "fa fa-bars";
+            }
+        }
+
+        /* SEARCH */
+        function openSearch() {
+            document.getElementById("searchPopup").classList.add("active");
+        }
+
+        function closeSearch() {
+            document.getElementById("searchPopup").classList.remove("active");
+        }
+
+        /* ================= CAROUSEL SLIDER ================= */
+
+        let slides = document.querySelectorAll(".slide");
+        let index = 0;
+
+        function showSlide() {
+
+            document.getElementById("slides").style.transform =
+                `translateX(-${index * 100}%)`;
+        }
+
+        /* NEXT */
+        function nextSlide() {
+
+            index++;
+
+            if (index >= slides.length) {
+                index = 0;
+            }
+
+            showSlide();
+        }
+
+        /* PREVIOUS */
+        function prevSlide() {
+
+            index--;
+
+            if (index < 0) {
+                index = slides.length - 1;
+            }
+
+            showSlide();
+        }
+
+        /* AUTO SLIDE EVERY 6 SECONDS */
+        setInterval(() => {
+
+            nextSlide();
+
+        }, 6000);
+
+        // MOBILE DROPDOWN CLICK
+        document.querySelectorAll(".dropdown span").forEach(item => {
+            item.addEventListener("click", () => {
+                if (window.innerWidth < 900) {
+                    item.parentElement.classList.toggle("active");
+                }
+            });
+        });
+
+
+    
+
+        // AUTO SHOW LOGIN AFTER 10 SEC
+// AUTO LOGIN POPUP ONLY IF NOT LOGGED IN
+const isLoggedIn =
+"{{ 'true' if session.get('user') else 'false' }}" === "true";
+
+if(!isLoggedIn){
+    setTimeout(()=>{
+        openPopup('loginPopup');
+    },10000);
+}
+
+function openPopup(id){
+    document.getElementById(id).style.display="flex";
+}
+
+function closePopup(id){
+    document.getElementById(id).style.display="none";
+}
+
+function loginUser(){
+
+    let formData=new FormData();
+
+    formData.append("username",
+        document.getElementById("username").value);
+
+    formData.append("password",
+        document.getElementById("password").value);
+
+    fetch('/login',{
+        method:'POST',
+        body:formData
+    })
+    .then(res=>res.json())
+    .then(data=>{
+        if(data.status=="success"){
+            alert("Login Success");
+            location.reload();
+        }else{
+            alert("Wrong Login");
+        }
+    });
+}
+
+function updatePassword(){
+
+    let formData = new FormData();
+
+    formData.append(
+        "username",
+        document.getElementById("fuser").value
+    );
+
+    formData.append(
+        "password",
+        document.getElementById("newpass").value
+    );
+
+    fetch('/forgot',{
+        method:'POST',
+        body:formData
+    })
+    .then(res=>res.json())
+    .then(data=>{
+
+        if(data.status=="updated"){
+            alert("Password Updated");
+            closePopup('forgotPopup');
+        }
+
+        else if(data.status=="notfound"){
+            alert("Username Not Found");
+        }
+
+    });
+}
+
+function registerUser(){
+
+    let formData=new FormData();
+
+    formData.append("username",
+        document.getElementById("ruser").value);
+
+    formData.append("password",
+        document.getElementById("rpass").value);
+
+    fetch('/register',{
+        method:'POST',
+        body:formData
+    })
+    .then(res=>res.json())
+    .then(data=>{
+        alert("Account Created");
+        closePopup('registerPopup');
+    });
+
+}
+
+    </script>
+
+</body>
+
+</html>

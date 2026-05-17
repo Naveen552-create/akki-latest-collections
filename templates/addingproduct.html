@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Product</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: #f5f7fb;
+        }
+
+        .container {
+            width: 90%;
+            margin: 30px auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .header h2 {
+            font-weight: 600;
+        }
+
+        .add-btn {
+            background: #4CAF50;
+            color: #fff;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .form-box {
+            margin-top: 30px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-box input,
+        .form-box select,
+        .form-box textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+
+        .form-box button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            background: #4CAF50;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            width: 320px;
+        }
+
+        .modal-content input,
+        .modal-content select {
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 8px;
+        }
+
+        .modal-content button {
+            width: 100%;
+            padding: 8px;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            margin-top: 5px;
+        }
+
+        .btn-add {
+            background: #2196F3;
+        }
+
+        .btn-delete {
+            background: #f44336;
+        }
+
+        .close {
+            float: right;
+            cursor: pointer;
+            font-size: 18px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+<div class="header">
+
+    <!-- LEFT SIDE -->
+    <div style="display:flex; align-items:center; gap:10px;">
+        
+        <!-- Back Button -->
+        <a href="/admin/dashboard" 
+           style="text-decoration:none; background:#6c757d; color:#fff; padding:8px 12px; border-radius:8px; font-size:14px;">
+            ← Back
+        </a>
+
+        <h2>Product Management</h2>
+    </div>
+
+    <!-- RIGHT SIDE -->
+    <button class="add-btn" onclick="openModal()">+</button>
+
+</div>
+
+        <!-- Product Form -->
+
+        <div class="form-box">
+            <h3>Add Product</h3>
+            <form method="POST" action="/add-product" enctype="multipart/form-data">
+
+                <input type="text" name="name" placeholder="Product Name" required>
+
+                <select name="category_id" id="category" required onchange="loadSubCategories()">
+                    <option value="">Select Category</option>
+                    {% for cat in categories %}
+                    <option value="{{cat.id}}">{{cat.name}}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="subcategory_id" id="subcategory" required disabled>
+                    <option value="">Select Sub Category</option>
+                </select>
+
+                <input type="number" name="quantity" placeholder="Quantity" required>
+
+                <input type="text" name="price" placeholder="Price" required>
+
+                <textarea name="description" placeholder="Description"></textarea>
+
+                <!-- Show on Home -->
+                <label
+                    style="display:flex; align-items:center; gap:10px; background:#f1f5f9; padding:10px; border-radius:8px; cursor:pointer;">
+                    <input type="checkbox" name="show_home"
+                        style="width:18px; height:18px; accent-color:#4CAF50; cursor:pointer;">
+                    <span style="font-weight:500;">Show on Home Page</span>
+                </label><br>
+
+                <!-- Image Upload -->
+               
+                <input type="file" name="images" accept="image/*" multiple required> 
+
+                <button type="submit">Add Product</button>
+            </form>
+        </div>
+
+
+
+    </div>
+
+    <!-- Modal -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+
+            <!-- ADD CATEGORY -->
+            <h4>Add Category</h4>
+            <form method="POST" action="/add-category">
+                <input type="text" name="name" placeholder="Category Name" required>
+                <button class="btn-add">Add Category</button>
+            </form> <br>
+
+
+            <!-- ADD SUBCATEGORY -->
+            <h4>Add Sub Category</h4>
+            <form method="POST" action="/add-subcategory">
+                <select name="category_id" required>
+                    <option value="">Select Category</option>
+                    {% for cat in categories %}
+                    <option value="{{cat.id}}">{{cat.name}}</option>
+                    {% endfor %}
+                </select>
+                <input type="text" name="name" placeholder="Sub Category Name" required>
+                <button class="btn-add">Add Sub Category</button>
+            </form> <br>
+
+
+            <!-- DELETE CATEGORY -->
+            <form method="POST" action="/delete-category">
+                <select name="category_id" required>
+                    <option value="">Select Category</option>
+                    {% for cat in categories %}
+                    <option value="{{cat.id}}">{{cat.name}}</option>
+                    {% endfor %}
+                </select>
+                <button class="btn-delete">Delete Category</button>
+            </form> <br>
+
+
+
+
+            <!-- DELETE SUBCATEGORY -->
+            <form method="POST" action="/delete-subcategory">
+                <select name="subcategory_id" required>
+                    <option value="">Select Sub Category</option>
+                    {% for sub in subcategories %}
+                    <option value="{{sub.id}}">{{sub.name}}</option>
+                    {% endfor %}
+                </select>
+                <button class="btn-delete">Delete Sub Category</button>
+            </form>
+
+        </div>
+    </div>
+
+    <script>
+        function openModal() {
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        function loadSubCategories() {
+            let categoryId = document.getElementById("category").value;
+            let sub = document.getElementById("subcategory");
+
+            sub.innerHTML = '<option value="">Loading...</option>';
+            sub.disabled = true;
+
+            if (categoryId === "") {
+                sub.innerHTML = '<option value="">Select Sub Category</option>';
+                return;
+            }
+
+            fetch("/get-subcategories/" + categoryId)
+                .then(res => res.json())
+                .then(data => {
+                    sub.innerHTML = '<option value="">Select Sub Category</option>';
+                    sub.disabled = false;
+
+                    data.forEach(item => {
+                        sub.innerHTML += `<option value="${item.id}">${item.name}</option>`;
+                    });
+                });
+        }
+    </script>
+
+</body>
+
+</html>

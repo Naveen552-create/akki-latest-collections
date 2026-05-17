@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manage Products</title>
+
+<style>
+
+body{
+    font-family:Arial,sans-serif;
+    background:#f5f7fa;
+    margin:0;
+}
+
+.header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:15px 20px;
+    background:#1b8f4b;
+    color:white;
+}
+
+.header a{
+    background:white;
+    color:#1b8f4b;
+    padding:8px 14px;
+    border-radius:6px;
+    text-decoration:none;
+    font-weight:bold;
+}
+
+.product-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:20px;
+    padding:20px;
+}
+
+.card{
+    background:white;
+    border-radius:12px;
+    overflow:hidden;
+    box-shadow:0 4px 14px rgba(0,0,0,0.1);
+    transition:.3s;
+}
+
+.card:hover{
+    transform:translateY(-6px);
+}
+
+.out-stock{
+    border:3px solid red;
+}
+
+.slider{
+    width:100%;
+    height:320px;
+    position:relative;
+    overflow:hidden;
+    background:#fff;
+}
+
+.slide{
+    width:100%;
+    height:320px;
+    object-fit:contain;
+    object-position:center;
+    position:absolute;
+    opacity:0;
+    transition:opacity 1s;
+}
+
+.slide.active{
+    opacity:1;
+}
+
+.card-body{
+    padding:15px;
+}
+
+.card-body h3{
+    margin:0;
+    font-size:18px;
+}
+
+.card-body p{
+    margin:6px 0;
+    font-size:14px;
+    color:#555;
+}
+
+.stock-zero{
+    color:red;
+    font-weight:bold;
+}
+
+.btn{
+    padding:8px 12px;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:13px;
+    margin-right:6px;
+}
+
+.edit-btn{
+    background:#28a745;
+    color:white;
+}
+
+.stock-btn{
+    background:red;
+    color:white;
+}
+
+.delete-btn{
+    background:#dc3545;
+    color:white;
+}
+
+@media(max-width:1200px){
+.product-grid{
+grid-template-columns:repeat(3,1fr);
+}
+}
+
+@media(max-width:900px){
+.product-grid{
+grid-template-columns:repeat(2,1fr);
+}
+}
+
+@media(max-width:600px){
+
+.product-grid{
+grid-template-columns:1fr;
+}
+
+.slider,.slide{
+height:250px;
+}
+
+}
+
+</style>
+</head>
+<body>
+
+<div class="header">
+<h2>Manage Products</h2>
+<a href="/admin/dashboard">← Back</a>
+</div>
+
+<div class="product-grid">
+
+{% for p in products %}
+
+<div class="card {% if p.quantity == 0 %}out-stock{% endif %}">
+
+<div class="slider">
+
+{% for img in p.images %}
+<img src="{{ url_for('static', filename=img) }}"
+class="slide {% if loop.first %}active{% endif %}">
+{% endfor %}
+
+</div>
+
+<div class="card-body">
+
+<h3>{{ p.name }}</h3>
+
+<p><b>Category:</b> {{ p.category }}</p>
+<p><b>Subcategory:</b> {{ p.subcategory }}</p>
+<p><b>Price:</b> ₹{{ p.price }}</p>
+
+<p>
+<b>Qty:</b>
+
+{% if p.quantity == 0 %}
+<span class="stock-zero">OUT OF STOCK</span>
+{% else %}
+{{ p.quantity }}
+{% endif %}
+</p>
+
+<br>
+
+<a href="/edit-product/{{p.id}}">
+<button class="btn {% if p.quantity == 0 %}stock-btn{% else %}edit-btn{% endif %}">
+
+{% if p.quantity == 0 %}
+Update Stock
+{% else %}
+Edit
+{% endif %}
+
+</button>
+</a>
+
+<a href="/delete-product/{{p.id}}"
+onclick="return confirm('Delete this product?')">
+<button class="btn delete-btn">
+Delete
+</button>
+</a>
+
+</div>
+</div>
+
+{% endfor %}
+
+</div>
+
+<script>
+
+document.querySelectorAll('.slider').forEach(slider=>{
+
+let slides=slider.querySelectorAll('.slide');
+let index=0;
+
+if(slides.length>1){
+
+setInterval(()=>{
+
+slides[index].classList.remove('active');
+
+index=(index+1)%slides.length;
+
+slides[index].classList.add('active');
+
+},2000);
+
+}
+
+});
+
+</script>
+
+</body>
+</html>

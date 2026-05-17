@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+
+/* RESET */
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins', sans-serif;
+}
+
+body{
+    background:#f4f6f9;
+}
+
+/* NAVBAR */
+.navbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:white;
+    padding:12px 25px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.08);
+}
+
+.logo{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-weight:600;
+    color:#1b8f4b;
+    font-size:16px;
+}
+
+.logo img{
+    width:40px;
+    height:40px;
+    border-radius:50%;
+}
+
+/* LOGOUT BUTTON */
+.logout{
+    background:#ff4d4d;
+    color:white;
+    padding:8px 15px;
+    border-radius:8px;
+    text-decoration:none;
+    font-size:14px;
+    transition:0.3s;
+}
+
+.logout:hover{
+    background:#e60000;
+}
+
+/* TITLE */
+.title{
+    padding:20px;
+    font-size:22px;
+    font-weight:600;
+    color:#333;
+}
+
+/* ================= DASHBOARD GRID ================= */
+
+.dashboard{
+    padding:20px;
+    display:grid;
+    grid-template-columns: repeat(4, 1fr); /* ✅ 4 per row */
+    gap:20px;
+}
+
+/* ================= CARD ================= */
+
+.card{
+    background:white;
+    border-radius:15px;
+    overflow:hidden;
+    box-shadow:0 6px 15px rgba(0,0,0,0.1);
+    transition:0.3s;
+    position:relative;
+    cursor:pointer;
+}
+
+.card:hover{
+    transform:translateY(-8px) scale(1.02);
+}
+
+/* IMAGE */
+.card img{
+    width:100%;
+    height:150px;
+    object-fit:cover;
+}
+
+/* CARD BODY */
+.card-body{
+    padding:15px;
+    text-align:center;
+}
+
+.card-body h3{
+    font-size:16px;
+    margin-bottom:10px;
+    color:#333;
+}
+
+/* BUTTON */
+.card-body a{
+    display:inline-block;
+    padding:8px 14px;
+    background:#1b8f4b;
+    color:white;
+    text-decoration:none;
+    border-radius:6px;
+    font-size:14px;
+    transition:0.3s;
+}
+
+.card-body a:hover{
+    background:#157a3e;
+}
+
+/* ================= COLOR TOP BORDERS ================= */
+
+.card:nth-child(1){border-top:5px solid #4CAF50;}
+.card:nth-child(2){border-top:5px solid #2196F3;}
+.card:nth-child(3){border-top:5px solid #FF9800;}
+.card:nth-child(4){border-top:5px solid #9C27B0;}
+.card:nth-child(5){border-top:5px solid #f44336;}
+.card:nth-child(6){border-top:5px solid #00bcd4;}
+.card:nth-child(7){border-top:5px solid #795548;}
+.card:nth-child(8){border-top:5px solid #3f51b5;}
+.card:nth-child(9){border-top:5px solid #009688;}
+.card:nth-child(10){border-top:5px solid #607d8b;}
+
+/* ================= RESPONSIVE ================= */
+
+/* TABLET */
+@media(max-width:992px){
+    .dashboard{
+        grid-template-columns: repeat(2, 1fr); /* 2 per row */
+    }
+}
+
+/* MOBILE */
+@media(max-width:600px){
+
+    .navbar{
+        flex-direction:column;
+        gap:10px;
+    }
+
+    .dashboard{
+        grid-template-columns: 1fr; /* 1 per row */
+    }
+
+    .title{
+        text-align:center;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<div class="navbar">
+    <div class="logo">
+        <img src="{{ url_for('static', filename='image/logo1.png') }}">
+        Akki Latest Collection
+    </div>
+
+    <a href="/admin/logout" class="logout">
+        <i class="fa fa-sign-out-alt"></i> Logout
+    </a>
+</div>
+
+<div class="title">Admin Dashboard</div>
+
+<!-- DASHBOARD -->
+<div class="dashboard">
+
+
+
+<div class="card">
+
+    <!-- TOP BOX WITH BACKGROUND -->
+    <div style="
+        background:#e6f7ee;
+        height:150px;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        border-top-left-radius:12px;
+        border-top-right-radius:12px;
+    ">
+        <i class="fa-solid fa-circle-plus" style="font-size:55px; color:#1b8f4b;"></i>
+    </div>
+
+    <div class="card-body">
+        <h3>Add Product</h3>
+        <p style="font-size:13px; color:#777;">Create New Product</p>
+
+        <a href="{{ url_for('adding_product_page') }}" 
+           style="display:inline-block; margin-top:10px; padding:6px 12px; background:#1b8f4b; color:white; border-radius:6px; text-decoration:none;">
+           Open
+        </a>
+    </div>
+
+</div>
+
+<div class="card">
+
+    <!-- TOP BOX WITH BACKGROUND -->
+    <div style="
+        background:#e6f7ee;
+        height:150px;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        border-top-left-radius:12px;
+        border-top-right-radius:12px;
+        gap:15px;
+    ">
+        <i class="fa-solid fa-pen-to-square"
+           style="font-size:55px; color:#1b8f4b;">
+        </i>
+
+        <i class="fa-solid fa-trash"
+           style="font-size:45px; color:#ff4d4d;">
+        </i>
+    </div>
+
+    <div class="card-body">
+        <h3>Manage Products</h3>
+        <p style="font-size:13px; color:#777;">
+            Edit & Delete Products
+        </p>
+
+        <a href="{{ url_for('manage_products') }}"
+           style="
+           display:inline-block;
+           margin-top:10px;
+           padding:6px 12px;
+           background:#1b8f4b;
+           color:white;
+           border-radius:6px;
+           text-decoration:none;">
+           Open
+        </a>
+    </div>
+
+</div>
+
+<div class="card">
+
+    <!-- TOP BOX WITH BACKGROUND -->
+    <div style="
+        background:#e6f7ee;
+        height:150px;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        border-top-left-radius:12px;
+        border-top-right-radius:12px;
+    ">
+        <i class="fa-solid fa-images" 
+           style="font-size:55px; color:#1b8f4b;">
+        </i>
+    </div>
+
+    <div class="card-body">
+        <h3>Adding Carousel</h3>
+        <p style="font-size:13px; color:#777;">
+            Manage Homepage Carousel
+        </p>
+
+        <a href="{{ url_for('carousel_page') }}" 
+           style="
+           display:inline-block;
+           margin-top:10px;
+           padding:6px 12px;
+           background:#1b8f4b;
+           color:white;
+           border-radius:6px;
+           text-decoration:none;">
+           Open
+        </a>
+    </div>
+
+</div>
+
+<div class="card">
+
+    <!-- TOP BOX WITH BACKGROUND -->
+    <div style="
+        background:#e6f7ee;
+        height:150px;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        border-top-left-radius:12px;
+        border-top-right-radius:12px;
+    ">
+        <i class="fa-solid fa-boxes-stacked" 
+           style="font-size:55px; color:#1b8f4b;">
+        </i>
+    </div>
+
+    <div class="card-body">
+        <h3>Stock Entries</h3>
+        <p style="font-size:13px; color:#777;">
+            Manage Product Stock
+        </p>
+
+        <a href="{{ url_for('stock_entry_page') }}" 
+           style="
+           display:inline-block;
+           margin-top:10px;
+           padding:6px 12px;
+           background:#1b8f4b;
+           color:white;
+           border-radius:6px;
+           text-decoration:none;">
+           Open
+        </a>
+    </div>
+
+</div>
+
+    <div class="card">
+
+    <!-- TOP BOX WITH BACKGROUND -->
+    <div style="
+        background:#e6f7ee;
+        height:150px;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        border-top-left-radius:12px;
+        border-top-right-radius:12px;
+    ">
+        <i class="fa-solid fa-cart-shopping"
+           style="font-size:55px; color:#1b8f4b;">
+        </i>
+    </div>
+
+    <div class="card-body">
+        <h3>Booking Order</h3>
+        <p style="font-size:13px; color:#777;">
+            Manage Customer Orders
+        </p>
+
+        <a href="/admin-booking-orders"
+           style="
+           display:inline-block;
+           margin-top:10px;
+           padding:6px 12px;
+           background:#1b8f4b;
+           color:white;
+           border-radius:6px;
+           text-decoration:none;">
+           Open
+        </a>
+    </div>
+
+</div>
+
+    <div class="card">
+
+    <!-- TOP BOX WITH BACKGROUND -->
+    <div style="
+        background:#e6f7ee;
+        height:150px;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        border-top-left-radius:12px;
+        border-top-right-radius:12px;
+    ">
+        <i class="fa-solid fa-circle-check"
+           style="font-size:55px; color:#1b8f4b;">
+        </i>
+    </div>
+
+    <div class="card-body">
+        <h3>Completed Order</h3>
+        <p style="font-size:13px; color:#777;">
+            View Delivered Orders
+        </p>
+
+        <a href="/admin-completed-orders"
+           style="
+           display:inline-block;
+           margin-top:10px;
+           padding:6px 12px;
+           background:#1b8f4b;
+           color:white;
+           border-radius:6px;
+           text-decoration:none;">
+           Open
+        </a>
+    </div>
+
+</div>
+
+    
+
+   <div class="card">
+
+    <!-- TOP BOX WITH BACKGROUND -->
+    <div style="
+        background:#e6f7ee;
+        height:150px;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        border-top-left-radius:12px;
+        border-top-right-radius:12px;
+    ">
+        <i class="fa-brands fa-whatsapp"
+           style="font-size:60px; color:#25D366;">
+        </i>
+    </div>
+
+    <div class="card-body">
+        <h3>WhatsApp Message</h3>
+        <p style="font-size:13px; color:#777;">
+            Send message to customers instantly
+        </p>
+
+        <a href="#"
+           style="
+           display:inline-block;
+           margin-top:10px;
+           padding:6px 12px;
+           background:#25D366;
+           color:white;
+           border-radius:6px;
+           text-decoration:none;">
+           Open
+        </a>
+    </div>
+
+</div>
+
+    <div class="card">
+
+    <!-- TOP BOX WITH BACKGROUND -->
+    <div style="
+        background:#e6f7ee;
+        height:150px;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        border-top-left-radius:12px;
+        border-top-right-radius:12px;
+    ">
+        <i class="fa-solid fa-print"
+           style="font-size:55px; color:#1b8f4b;">
+        </i>
+    </div>
+
+    <div class="card-body">
+        <h3>Address Printing</h3>
+        <p style="font-size:13px; color:#777;">
+            Print Shipping Labels (Thermal Format)
+        </p>
+
+        <a href="#"
+           style="
+           display:inline-block;
+           margin-top:10px;
+           padding:6px 12px;
+           background:#1b8f4b;
+           color:white;
+           border-radius:6px;
+           text-decoration:none;">
+           Open
+        </a>
+    </div>
+
+</div>
+   <div class="card">
+
+    <!-- TOP BOX WITH BACKGROUND -->
+    <div style="
+        background:#e6f7ee;
+        height:150px;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        border-top-left-radius:12px;
+        border-top-right-radius:12px;
+    ">
+        <i class="fa-solid fa-chart-line"
+           style="font-size:55px; color:#1b8f4b;">
+        </i>
+    </div>
+
+    <div class="card-body">
+        <h3>Reports</h3>
+        <p style="font-size:13px; color:#777;">
+            View Sales & Order Reports
+        </p>
+
+        <a href="#"
+           style="
+           display:inline-block;
+           margin-top:10px;
+           padding:6px 12px;
+           background:#1b8f4b;
+           color:white;
+           border-radius:6px;
+           text-decoration:none;">
+           Open
+        </a>
+    </div>
+
+</div>
+
+</div>
+
+</body>
+</html>

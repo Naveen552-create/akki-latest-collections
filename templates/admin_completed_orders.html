@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Completed Orders</title>
+
+<style>
+body{
+font-family:Arial;
+background:#f5f6fa;
+padding:30px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+background:white;
+box-shadow:0 4px 16px rgba(0,0,0,.08);
+}
+
+th,td{
+padding:14px;
+border:1px solid #ddd;
+text-align:center;
+}
+
+th{
+background:#222;
+color:white;
+}
+
+.done{
+color:green;
+font-weight:bold;
+}
+
+button{
+padding:10px 18px;
+background:#333;
+color:white;
+border:none;
+border-radius:8px;
+cursor:pointer;
+}
+
+.top-bar{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:30px;
+}
+
+.back-btn{
+background:#1b8f4b;
+color:white;
+padding:12px 22px;
+text-decoration:none;
+border-radius:10px;
+font-weight:bold;
+transition:.3s;
+}
+
+.back-btn:hover{
+background:#146d39;
+}
+
+
+@media print{
+button{
+display:none;
+}
+}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+
+<h2>Completed Orders</h2>
+
+<button onclick="window.print()">Print</button>
+
+<a href="/admin/dashboard" class="back-btn">
+← Back
+</a>
+
+</div>
+
+
+
+<br><br>
+
+<table>
+<tr>
+<th>ID</th>
+<th>User</th>
+<th>Image</th>
+<th>Product</th>
+<th>Qty</th>
+<th>Name</th>
+<th>Phone</th>
+<th>Address</th>
+<th>Payment</th>
+<th>Status</th>
+</tr>
+
+{% for o in orders %}
+<tr>
+<td>{{ o.id }}</td>
+<td>{{ o.username }}</td>
+<td>
+{% if o.images %}
+<img src="{{ url_for('static', filename=o.images[0]) }}"
+style="width:90px;height:110px;object-fit:contain;border-radius:10px;">
+{% endif %}
+</td>
+<td>{{ o.product_id }}</td>
+<td>{{ o.quantity }}</td>
+<td>{{ o.full_name }}</td>
+<td>{{ o.phone }}</td>
+
+<td>
+{{ o.landmark }},
+{{ o.city }},
+{{ o.state }},
+{{ o.country }}
+- {{ o.pincode }}
+</td>
+
+<td>{{ o.payment_mode }}</td>
+
+<td class="done">
+Completed
+</td>
+
+</tr>
+{% endfor %}
+
+</table>
+
+</body>
+</html>

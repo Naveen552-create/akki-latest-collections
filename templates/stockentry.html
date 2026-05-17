@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stock Entry</title>
+
+    <style>
+        body{
+            font-family:Arial;
+            background:#f5f7fb;
+            margin:0;
+        }
+
+        .container{
+            width:90%;
+            margin:auto;
+        }
+
+        .form-box{
+            background:#fff;
+            padding:20px;
+            margin-top:20px;
+            border-radius:10px;
+            box-shadow:0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        input,select{
+            width:100%;
+            padding:10px;
+            margin-bottom:10px;
+            border-radius:6px;
+            border:1px solid #ccc;
+        }
+
+        button{
+            padding:8px 12px;
+            background:#4CAF50;
+            color:white;
+            border:none;
+            border-radius:6px;
+            cursor:pointer;
+        }
+
+        .btn-delete{
+            background:#f44336;
+        }
+
+        table{
+            width:100%;
+            margin-top:30px;
+            border-collapse:collapse;
+            background:#fff;
+        }
+
+        table th,table td{
+            padding:10px;
+            border:1px solid #ddd;
+            text-align:center;
+        }
+
+        table th{
+            background:#4CAF50;
+            color:#fff;
+        }
+
+        .modal{
+            display:none;
+            position:fixed;
+            top:0;
+            left:0;
+            width:100%;
+            height:100%;
+            background:rgba(0,0,0,0.5);
+            justify-content:center;
+            align-items:center;
+        }
+
+        .modal-content{
+            background:#fff;
+            padding:20px;
+            border-radius:10px;
+            width:320px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div style="display:flex;align-items:center;gap:10px;margin-top:20px;">
+
+<a href="/admin/dashboard"
+style="
+text-decoration:none;
+background:#6c757d;
+color:#fff;
+padding:8px 14px;
+border-radius:8px;
+font-size:14px;">
+← Back
+</a>
+
+<h2 style="margin:0;">Stock Entry</h2>
+
+</div>
+
+<!-- FORM -->
+<div class="form-box">
+
+<form method="POST" action="/add-stock">
+
+<input type="text" name="name" placeholder="Item Name" required>
+
+<select name="category_id" id="category" onchange="loadSubCategories()" required>
+<option value="">Select Category</option>
+
+{% for cat in categories %}
+<option value="{{cat.id}}">
+{{cat.name}}
+</option>
+{% endfor %}
+</select>
+
+<select name="subcategory_id" id="subcategory" required disabled>
+<option value="">Select Sub Category</option>
+</select>
+
+<input type="date" name="date" required>
+
+<input type="number" name="price" placeholder="Price" required>
+
+<input type="number" name="quantity" placeholder="Quantity" required>
+
+<select name="payment_mode" required>
+<option value="">Select Payment Mode</option>
+<option value="Cash">Cash</option>
+<option value="PhonePe">PhonePe</option>
+<option value="Google Pay">Google Pay</option>
+<option value="Paytm">Paytm</option>
+<option value="Bank Transfer">Bank Transfer</option>
+</select>
+
+<button type="submit">Add Stock</button>
+
+</form>
+</div>
+
+<!-- TABLE -->
+
+<table>
+
+<tr>
+<th>Name</th>
+<th>Category</th>
+<th>Sub Category</th>
+<th>Date</th>
+<th>Price</th>
+<th>Quantity</th>
+<th>Payment Mode</th>
+<th>Action</th>
+</tr>
+
+{% for s in stock %}
+
+<tr>
+
+<td>{{s.name}}</td>
+<td>{{s.category_name}}</td>
+<td>{{s.subcategory_name}}</td>
+<td>{{s.date}}</td>
+<td>{{s.price}}</td>
+<td>{{s.quantity}}</td>
+<td>{{s.payment_mode}}</td>
+
+<td>
+
+<button onclick="openEdit(
+'{{s.id}}',
+'{{s.name}}',
+'{{s.price}}',
+'{{s.quantity}}',
+'{{s.date}}',
+'{{s.payment_mode}}'
+)">
+Edit
+</button>
+
+<a href="/delete-stock/{{s.id}}"
+onclick="return confirm('Delete this entry?')">
+
+<button class="btn-delete">
+Delete
+</button>
+
+</a>
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+</div>
+
+
+<!-- EDIT POPUP -->
+
+<div class="modal" id="editModal">
+
+<div class="modal-content">
+
+<h3>Edit Stock</h3>
+
+<form method="POST" id="editForm">
+
+<input type="text" name="name" id="editName" required>
+
+<input type="date" name="date" id="editDate" required>
+
+<input type="number" name="price" id="editPrice" required>
+
+<input type="number" name="quantity" id="editQuantity" required>
+
+<select name="payment_mode" id="editPayment" required>
+<option value="Cash">Cash</option>
+<option value="PhonePe">PhonePe</option>
+<option value="Google Pay">Google Pay</option>
+<option value="Paytm">Paytm</option>
+<option value="Bank Transfer">Bank Transfer</option>
+</select>
+
+<button type="submit">Update</button>
+
+<button type="button" onclick="closeModal()">
+Cancel
+</button>
+
+</form>
+
+</div>
+</div>
+
+
+<script>
+
+function loadSubCategories(){
+
+let categoryId=document.getElementById("category").value;
+let sub=document.getElementById("subcategory");
+
+sub.innerHTML='<option>Loading...</option>';
+sub.disabled=true;
+
+if(categoryId==="") return;
+
+fetch("/get-subcategories/"+categoryId)
+
+.then(res=>res.json())
+
+.then(data=>{
+
+sub.innerHTML='<option value="">Select Sub Category</option>';
+sub.disabled=false;
+
+data.forEach(item=>{
+
+sub.innerHTML+=`
+<option value="${item.id}">
+${item.name}
+</option>`;
+
+});
+
+});
+
+}
+
+
+function openEdit(
+id,
+name,
+price,
+quantity,
+date,
+payment
+){
+
+document.getElementById("editModal").style.display="flex";
+
+document.getElementById("editName").value=name;
+document.getElementById("editPrice").value=price;
+document.getElementById("editQuantity").value=quantity;
+document.getElementById("editDate").value=date;
+document.getElementById("editPayment").value=payment;
+
+document.getElementById("editForm").action=
+"/update-stock/"+id;
+
+}
+
+
+function closeModal(){
+
+document.getElementById("editModal").style.display="none";
+
+}
+
+</script>
+
+</body>
+</html>
