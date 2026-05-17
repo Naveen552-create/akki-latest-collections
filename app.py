@@ -11,6 +11,12 @@ app = Flask(__name__)
 app.secret_key = "secret123"   
 
 
+@app.before_request
+def force_https():
+    if request.headers.get("X-Forwarded-Proto") == "http":
+        return redirect(request.url.replace("http://", "https://", 1), code=301)
+
+
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['CAROUSEL_FOLDER'] = 'static/carousel'
 
