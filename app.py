@@ -240,30 +240,47 @@ def product_details(id):
 
     product = cursor.fetchone()
 
-    # Product images
+    if not product:
+        conn.close()
+        return "Product not found"
+
+    # Product images (CORRECT ORDER)
     cursor.execute("""
         SELECT image
         FROM product_images
         WHERE product_id=%s
-        ORDER BY id DESC
+        ORDER BY id ASC
     """, (id,))
 
     images = cursor.fetchall()
-    product['images'] = [img['image'] for img in images]
 
-    # Same category products
+    product['images'] = [
+        img['image']
+        for img in images
+    ]
+
+    # Related products
     cursor.execute("""
         SELECT
             p.id,
             p.name,
             p.price,
-            GROUP_CONCAT(pi.image) AS images
+
+            GROUP_CONCAT(
+                pi.image
+                ORDER BY pi.id ASC
+            ) AS images
+
         FROM products p
+
         LEFT JOIN product_images pi
             ON p.id = pi.product_id
+
         WHERE p.category_id=%s
         AND p.id!=%s
+
         GROUP BY p.id
+
         ORDER BY p.created_at DESC
     """, (
         product['category_id'],
@@ -273,9 +290,11 @@ def product_details(id):
     related_products = cursor.fetchall()
 
     for item in related_products:
+
         item['images'] = (
             item['images'].split(',')
-            if item['images'] else []
+            if item['images']
+            else []
         )
 
     conn.close()
@@ -286,6 +305,8 @@ def product_details(id):
         related_products=related_products
     )
 
+
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
 
 
 
