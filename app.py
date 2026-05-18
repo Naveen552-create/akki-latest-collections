@@ -17,7 +17,10 @@ def force_https():
         return redirect(request.url.replace("http://", "https://", 1), code=301)
 
 
+# Upload folder
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
 app.config['CAROUSEL_FOLDER'] = 'static/carousel'
 
 RAZORPAY_KEY_ID = "rzp_test_SpMXL5VFY8LN9c"
@@ -224,7 +227,7 @@ def product_details(id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    # Current product
+    # Current Product
     cursor.execute("""
         SELECT
             p.*,
@@ -241,10 +244,11 @@ def product_details(id):
     product = cursor.fetchone()
 
     if not product:
+        cursor.close()
         conn.close()
         return "Product not found"
 
-    # Product images (CORRECT ORDER)
+    # Product Images
     cursor.execute("""
         SELECT image
         FROM product_images
@@ -257,30 +261,25 @@ def product_details(id):
     product['images'] = [
         img['image']
         for img in images
+        if img['image']
     ]
 
-    # Related products
+    # Related Products
     cursor.execute("""
         SELECT
             p.id,
             p.name,
             p.price,
-
             GROUP_CONCAT(
                 pi.image
                 ORDER BY pi.id ASC
             ) AS images
-
         FROM products p
-
         LEFT JOIN product_images pi
             ON p.id = pi.product_id
-
         WHERE p.category_id=%s
         AND p.id!=%s
-
         GROUP BY p.id
-
         ORDER BY p.created_at DESC
     """, (
         product['category_id'],
@@ -291,12 +290,12 @@ def product_details(id):
 
     for item in related_products:
 
-        item['images'] = (
-            item['images'].split(',')
-            if item['images']
-            else []
-        )
+        if item['images']:
+            item['images'] = item['images'].split(',')
+        else:
+            item['images'] = []
 
+    cursor.close()
     conn.close()
 
     return render_template(
@@ -306,7 +305,6 @@ def product_details(id):
     )
 
 
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
 
 
 
