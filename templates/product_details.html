@@ -1,11 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-
 <title>{{ product.name }}</title>
-
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0">
 
 <link rel="stylesheet"
 href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -16,47 +12,33 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
 margin:0;
 padding:0;
 box-sizing:border-box;
-font-family:Arial,sans-serif;
+font-family:Arial;
 }
 
 body{
-background:#f5f5f5;
-padding:20px;
-color:#111;
+background:#f8f8f8;
+padding:25px;
 }
 
-/* =========================
-DESKTOP VIEW UPDATED
-========================= */
-
+/* MAIN */
 .container{
 max-width:1400px;
 margin:auto;
 display:grid;
-grid-template-columns:55% 45%;
-gap:40px;
-background:#fff;
-padding:30px;
-border-radius:16px;
-box-shadow:0 4px 15px rgba(0,0,0,.08);
-align-items:start;
-}
-
-/* =========================
-LEFT SIDE IMAGE SECTION
-========================= */
-
-.image-section{
-grid-column:1;
-width:100%;
+grid-template-columns:1fr 1fr;
+gap:45px;
+background:white;
+padding:35px;
+border-radius:15px;
+box-shadow:0 4px 16px rgba(0,0,0,.08);
 }
 
 .main-image{
 width:100%;
 height:650px;
 object-fit:contain;
-background:#fff;
-border:1px solid #eee;
+background:white;
+border:1px solid #ddd;
 border-radius:12px;
 }
 
@@ -65,140 +47,72 @@ display:flex;
 gap:12px;
 overflow-x:auto;
 margin-top:15px;
-padding-bottom:5px;
-}
-
-.thumb-wrap::-webkit-scrollbar{
-height:6px;
 }
 
 .thumb{
-width:100px;
-height:120px;
-object-fit:cover;
-border-radius:10px;
+width:110px;
+height:130px;
+object-fit:contain;
 cursor:pointer;
 border:2px solid #ddd;
-background:#fff;
-flex-shrink:0;
-transition:.3s;
+border-radius:10px;
+background:white;
 }
 
 .thumb:hover{
 border-color:#1b8f4b;
 }
 
-/* =========================
-RIGHT SIDE PRODUCT TITLE
-========================= */
-
-.product-info{
-grid-column:2;
-padding:0;
-margin-bottom:15px;
+.details h1{
+font-size:36px;
 }
 
-.product-title{
-font-size:42px;
-line-height:1.3;
-font-weight:700;
-color:#111;
-}
-
-/* =========================
-RIGHT SIDE DETAILS
-========================= */
-
-.product-details{
-grid-column:2;
-padding:0;
-margin-top:0;
-display:flex;
-flex-direction:column;
-}
-
-.category{
-font-size:20px;
-color:#007185;
-margin-bottom:8px;
-font-weight:500;
-}
-
-.subcategory{
-font-size:16px;
-color:#565959;
-line-height:1.7;
-margin-bottom:14px;
-}
-
-.desc{
-font-size:16px;
-line-height:1.8;
-color:#333;
-margin-top:8px;
-}
-
-.see-more{
-display:inline-block;
+.details h3{
 margin-top:10px;
-font-size:15px;
-font-weight:600;
-color:#007185;
-cursor:pointer;
+color:#555;
 }
 
 .price{
-font-size:50px;
-font-weight:700;
-color:#111;
-margin-top:22px;
-margin-bottom:12px;
+font-size:34px;
+color:#1b8f4b;
+font-weight:bold;
+margin:18px 0;
 }
 
-.stock{
-font-size:22px;
-font-weight:700;
-color:#008a00;
-margin-top:10px;
+.desc{
+line-height:1.8;
+color:#444;
+margin-top:15px;
 }
 
-/* BUTTON */
-
+/* BUTTONS */
 .btn-wrap{
-margin-top:30px;
 display:flex;
-justify-content:flex-start;
+gap:15px;
+margin-top:25px;
+}
+
+button{
+padding:15px 25px;
+border:none;
+border-radius:10px;
+font-size:16px;
+cursor:pointer;
 }
 
 .cart-btn{
-width:100%;
-max-width:420px;
-background:#ffd814;
-border:1px solid #fcd200;
-color:#111;
-padding:18px;
-font-size:22px;
-font-weight:700;
-border-radius:50px;
-cursor:pointer;
-transition:.3s;
+background:#1b8f4b;
+color:white;
 }
 
-.cart-btn:hover{
-background:#f7ca00;
+.order-btn{
+background:#ff6600;
+color:white;
 }
 
-/* =========================
-RELATED PRODUCTS
-========================= */
-
+/* RELATED */
 .related{
-margin-top:60px;
-}
-
-.related h2{
-margin-bottom:20px;
-font-size:28px;
+margin-top:70px;
 }
 
 .related-grid{
@@ -208,8 +122,8 @@ gap:18px;
 }
 
 .related-card{
-background:#fff;
-padding:12px;
+background:white;
+padding:15px;
 border-radius:12px;
 box-shadow:0 2px 8px rgba(0,0,0,.08);
 text-align:center;
@@ -222,35 +136,18 @@ transform:translateY(-5px);
 
 .related-card img{
 width:100%;
-height:220px;
+height:250px;
 object-fit:contain;
 }
 
-.related-card h4{
-font-size:15px;
-margin-top:10px;
-line-height:1.5;
-color:#111;
-}
-
-.related-card p{
-margin-top:8px;
-font-weight:bold;
-font-size:16px;
-color:#1b8f4b;
-}
-
-/* =========================
-CART POPUP
-========================= */
-
+/* CART POPUP */
 .cart-popup{
 position:fixed;
 top:0;
 right:-500px;
 width:420px;
 height:100%;
-background:#fff;
+background:white;
 box-shadow:-4px 0 20px rgba(0,0,0,.18);
 transition:.4s;
 z-index:9999;
@@ -296,488 +193,195 @@ background:#1b8f4b;
 color:white;
 padding:16px;
 font-size:18px;
-border:none;
-border-radius:10px;
-cursor:pointer;
 }
 
-/* =========================
-RELATED PRODUCTS
-========================= */
-
-.related{
-margin-top:60px;
-}
-
-.related h2{
-margin-bottom:20px;
-font-size:28px;
-}
-
-.related-grid{
-display:grid;
-grid-template-columns:repeat(4,1fr);
-gap:18px;
-}
-
-.related-card{
-background:#fff;
-padding:12px;
-border-radius:12px;
-box-shadow:0 2px 8px rgba(0,0,0,.08);
-text-align:center;
-transition:.3s;
-}
-
-.related-card:hover{
-transform:translateY(-5px);
-}
-
-.related-card img{
-width:100%;
-height:220px;
-object-fit:contain;
-}
-
-.related-card h4{
-font-size:15px;
-margin-top:10px;
-line-height:1.5;
-color:#111;
-}
-
-.related-card p{
-margin-top:8px;
-font-weight:bold;
-font-size:16px;
-color:#1b8f4b;
-}
-
-/* =========================
-CART POPUP
-========================= */
-
-.cart-popup{
-position:fixed;
-top:0;
-right:-500px;
-width:420px;
-height:100%;
-background:#fff;
-box-shadow:-4px 0 20px rgba(0,0,0,.18);
-transition:.4s;
-z-index:9999;
-overflow:auto;
-}
-
-.cart-popup.active{
-right:0;
-}
-
-.cart-box{
-padding:30px;
-text-align:center;
-position:relative;
-}
-
-.close-cart{
-position:absolute;
-right:18px;
-top:10px;
-font-size:30px;
-cursor:pointer;
-}
-
-.cart-img{
-width:100%;
-height:260px;
-object-fit:contain;
-}
-
-.cart-box input{
-width:100%;
-padding:14px;
-margin:15px 0;
-border:1px solid #ddd;
-border-radius:10px;
-font-size:16px;
-}
-
-.cart-box button{
-width:100%;
-background:#1b8f4b;
-color:white;
-padding:16px;
-font-size:18px;
-border:none;
-border-radius:10px;
-cursor:pointer;
-}
-
-
-
-.top-back{
-display:flex;
-justify-content:flex-end;
-padding:12px;
-
-}
-
-.top-back a{
-background:#1b8f4b;
-color:#fff;
-padding:10px 18px;
-border-radius:8px;
-text-decoration:none;
-font-weight:bold;
-box-shadow:0 4px 10px rgba(0,0,0,.15);
-}
-
-/* =========================
-MOBILE VIEW
-========================= */
-
+/* MOBILE */
 @media(max-width:900px){
 
 body{
 padding:0;
-margin:0;
-background:#fff;
-overflow-x:hidden;
 }
-
-/* BACK BUTTON */
-
-.top-back{
-padding:12px;
-background:#fff;
-position:sticky;
-top:0;
-z-index:999;
-border-bottom:1px solid #eee;
-}
-
-.top-back a{
-background:#1b8f4b;
-color:#fff;
-padding:10px 18px;
-border-radius:8px;
-text-decoration:none;
-font-weight:bold;
-display:inline-block;
-box-shadow:0 4px 10px rgba(0,0,0,.15);
-}
-
-/* CONTAINER */
 
 .container{
 display:flex;
-flex-direction:column;
-padding:0;
-gap:0;
+flex-direction:column-reverse;
+padding:15px;
 border-radius:0;
 box-shadow:none;
-background:#fff;
+gap:20px;
 }
 
-/* =========================
-TITLE FIRST
-========================= */
-
-.product-info{
-display:flex;
-flex-direction:column;
-padding:16px;
-order:1;
+.details{
+padding:15px;
 }
 
-.product-title{
+.details h1{
+font-size:24px;
+}
+
+.price{
 font-size:28px;
-line-height:1.4;
-margin-bottom:16px;
-}
-
-/* =========================
-IMAGE AFTER TITLE
-========================= */
-
-.image-section{
-order:2;
-background:#fff;
 }
 
 .main-image{
-width:100%;
-height:420px;
-object-fit:contain;
+height:320px;
 border:none;
-border-radius:0;
-padding:0 10px;
-background:#fff;
-}
-
-.thumb-wrap{
-display:flex;
-gap:10px;
-overflow-x:auto;
-padding:12px 14px;
-margin-top:0;
-scrollbar-width:none;
-}
-
-.thumb-wrap::-webkit-scrollbar{
-display:none;
 }
 
 .thumb{
 width:75px;
 height:90px;
-border-radius:10px;
-border:1px solid #ddd;
-object-fit:cover;
-background:#fff;
-flex-shrink:0;
-}
-
-/* =========================
-REMAINING DETAILS BELOW IMAGE
-========================= */
-
-.product-details{
-order:3;
-padding:16px;
-display:flex;
-flex-direction:column;
-}
-
-.category{
-font-size:15px;
-margin-top:5px;
-}
-
-.subcategory{
-font-size:14px;
-line-height:1.7;
-margin-top:5px;
-margin-bottom:0;
-}
-
-.desc{
-font-size:15px;
-line-height:1.8;
-margin-top:18px;
-
-display:-webkit-box;
--webkit-box-orient:vertical;
--webkit-line-clamp:3;
-
-line-clamp:3;
-
-overflow:hidden;
-text-overflow:ellipsis;
-}
-
-.see-more{
-margin-top:10px;
-font-size:14px;
-}
-
-.price{
-font-size:40px;
-margin-top:24px;
-margin-bottom:10px;
-}
-
-.stock{
-font-size:18px;
-margin-top:6px;
 }
 
 .btn-wrap{
-margin-top:24px;
-}
-
-.cart-btn{
+position:fixed;
+bottom:0;
+left:0;
 width:100%;
-padding:17px;
-font-size:20px;
-border-radius:50px;
+background:white;
+padding:10px;
+display:flex;
+z-index:999;
+box-shadow:0 -3px 10px rgba(0,0,0,.08);
 }
 
-/* RELATED */
+.btn-wrap button{
+flex:1;
+padding:14px;
+}
 
 .related{
-margin-top:10px;
-padding:14px;
-background:#fff;
-}
-
-.related h2{
-font-size:22px;
-margin-bottom:15px;
+padding:15px;
+margin-bottom:90px;
 }
 
 .related-grid{
-display:grid;
-grid-template-columns:repeat(2,1fr);
+grid-template-columns:1fr 1fr;
 gap:12px;
 }
 
-.related-card{
-padding:10px;
-}
-
 .related-card img{
-height:170px;
+height:140px;
 }
 
-.related-card h4{
-font-size:13px;
-}
-
-.related-card p{
-font-size:15px;
-}
-
-/* CART POPUP */
-
+/* bottom popup */
 .cart-popup{
 width:100%;
 height:75%;
 top:auto;
 bottom:-100%;
 right:0;
-border-radius:20px 20px 0 0;
+border-radius:25px 25px 0 0;
 }
 
 .cart-popup.active{
 bottom:0;
 }
 
-.cart-box{
-padding:20px;
-}
-
 .cart-img{
-height:220px;
+height:160px;
 }
 
 }
 
 </style>
-
 </head>
-
 <body>
 
-<!-- BACK BUTTON -->
 
-<div class="top-back">
+<div style="
+display:flex;
+justify-content:flex-end;
+padding:20px 30px 0 30px;
+">
 
-<a href="/">
+<a href="/"
+style="
+background:#1b8f4b;
+color:white;
+padding:10px 18px;
+border-radius:8px;
+text-decoration:none;
+font-weight:bold;
+box-shadow:0 4px 10px rgba(0,0,0,0.15);
+transition:.3s;
+"
+onmouseover="this.style.background='#146d39'"
+onmouseout="this.style.background='#1b8f4b'">
+
 ← Back Home
+
 </a>
 
-</div>
+</div><br>
 
-<!-- MAIN CONTAINER -->
 
 <div class="container">
 
-<!-- PRODUCT TITLE -->
-
-<div class="product-info">
-
-<h1 class="product-title">
-{{ product.name }}
-</h1>
-
-</div>
-
-<!-- IMAGE SECTION -->
-
-<div class="image-section">
+<!-- IMAGE -->
+<div>
 
 <img id="main"
 src="{{ url_for('static', filename=product.images[0]) }}"
 class="main-image">
 
 <div class="thumb-wrap">
-
 {% for img in product.images %}
-
-<img
-src="{{ url_for('static', filename=img) }}"
+<img src="{{ url_for('static', filename=img) }}"
 class="thumb"
 onclick="changeImage(this.src)">
-
 {% endfor %}
-
 </div>
 
 </div>
 
-<!-- PRODUCT DETAILS -->
 
-<div class="product-details">
+<!-- DETAILS -->
+<div class="details">
 
-<h3 class="category">
-{{ product.category }}
-</h3>
+<h1>{{ product.name }}</h1>
 
-<p class="subcategory">
-{{ product.subcategory }}
-</p>
+<h3>{{ product.category }}</h3>
 
-<p class="desc">
-{{ product.description }}
-</p>
-
-<span class="see-more">
-See More
-</span>
+<p>{{ product.subcategory }}</p>
 
 <div class="price">
 ₹{{ product.price }}
 </div>
 
-<p class="stock">
-
+<p>
 <b>Stock:</b>
 
 {% if product.quantity == 0 %}
-
-<span style="color:red;">
+<span style="color:red;font-weight:bold;">
 Out Of Stock
 </span>
-
 {% else %}
-
 {{ product.quantity }}
-
 {% endif %}
-
 </p>
+
+<p class="desc">{{ product.description }}</p>
 
 <div class="btn-wrap">
 
 <button class="cart-btn"
 onclick="openCart()">
-
 <i class="fa fa-shopping-cart"></i>
-
 Add To Cart
-
 </button>
 
-</div>
+
 
 </div>
 
 </div>
 
-<!-- RELATED PRODUCTS -->
+</div>
 
+
+
+<!-- RELATED -->
 <div class="related">
 
 <h2>Related Products</h2>
@@ -785,18 +389,14 @@ Add To Cart
 <div class="related-grid">
 
 {% for item in related_products %}
-
 <a href="/product/{{ item.id }}"
 style="text-decoration:none;color:black;">
 
 <div class="related-card">
 
 {% if item.images %}
-
-<img
-src="{{ url_for('static',
+<img src="{{ url_for('static',
 filename=item.images[0]) }}">
-
 {% endif %}
 
 <h4>{{ item.name }}</h4>
@@ -806,26 +406,21 @@ filename=item.images[0]) }}">
 </div>
 
 </a>
-
 {% endfor %}
 
 </div>
-
 </div>
 
-<!-- CART POPUP -->
 
+
+<!-- CART POPUP -->
 <div class="cart-popup"
 id="cartPopup">
 
 <div class="cart-box">
 
 <span class="close-cart"
-onclick="closeCart()">
-
-&times;
-
-</span>
+onclick="closeCart()">&times;</span>
 
 <img
 src="{{ url_for('static',
@@ -835,7 +430,6 @@ class="cart-img">
 <h2>{{ product.name }}</h2>
 
 <p>{{ product.category }}</p>
-
 <p>{{ product.subcategory }}</p>
 
 <h3>₹{{ product.price }}</h3>
@@ -857,18 +451,16 @@ Add To Cart
 
 </div>
 
+
+
 <script>
 
 /* IMAGE CHANGE */
-
 function changeImage(src){
-
 document.getElementById("main").src=src;
-
 }
 
 /* AUTO SLIDER */
-
 window.onload=function(){
 
 const slides=
@@ -895,28 +487,22 @@ slides[current].src;
 
 };
 
-/* OPEN CART */
 
+/* CART OPEN */
 function openCart(){
-
 document.getElementById(
 'cartPopup'
 ).classList.add('active');
-
 }
 
-/* CLOSE CART */
-
+/* CLOSE */
 function closeCart(){
-
 document.getElementById(
 'cartPopup'
 ).classList.remove('active');
-
 }
 
-/* CONFIRM */
-
+/* ADD */
 function confirmCart(){
 
 let qty=
