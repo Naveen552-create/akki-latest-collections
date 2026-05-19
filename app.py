@@ -35,17 +35,13 @@ app.config['CAROUSEL_FOLDER'] = 'static/carousel'
 
 
 # ================= CASHFREE CONFIG =================
-
-Cashfree.XClientId = "TEST110799425470798493d0afe4dde624997011"
-
-Cashfree.XClientSecret = "cfsk_ma_test_9f329490b10dda7036ea6c2ac98a61be_6e92893f"
-
-Cashfree.XEnvironment = Cashfree.SANDBOX
-
+from cashfree_pg.api_client import Cashfree
 
 Cashfree.XClientId = os.environ.get("CASHFREE_CLIENT_ID")
 
 Cashfree.XClientSecret = os.environ.get("CASHFREE_CLIENT_SECRET")
+
+Cashfree.XEnvironment = Cashfree.SANDBOX
 
 
 # DB CONNECTION
