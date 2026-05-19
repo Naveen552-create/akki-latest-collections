@@ -1,4 +1,4 @@
 Flask
 gunicorn
 mysql-connector-python
-razorpay
+cashfree-pg

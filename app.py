@@ -1,10 +1,15 @@
+import time
 from flask import Flask, render_template, request, jsonify, redirect, session
 import mysql.connector
 import os
 from werkzeug.utils import secure_filename
-import razorpay
-from flask import jsonify
+from flask import *
 from collections import defaultdict
+from flask import jsonify
+from cashfree_pg.api_client import Cashfree
+from cashfree_pg.models.create_order_request import CreateOrderRequest
+from cashfree_pg.models.customer_details import CustomerDetails
+from cashfree_pg.models.order_meta import OrderMeta
 
 
 app = Flask(__name__)
@@ -17,8 +22,8 @@ def force_https():
         return redirect(request.url.replace("http://", "https://", 1), code=301)
 
 
-# Render persistent disk path
-UPLOAD_FOLDER = '/opt/render/project/src/static/uploads'
+# ✅ ALWAYS USE RELATIVE PATH (IMPORTANT)
+UPLOAD_FOLDER = os.path.join('static', 'uploads')
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -26,10 +31,19 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 app.config['CAROUSEL_FOLDER'] = 'static/carousel'
 
-RAZORPAY_KEY_ID = "rzp_test_SpMXL5VFY8LN9c"
-RAZORPAY_KEY_SECRET = "6wXU4zXpMIoQgmH6MrbSrfSD"
 
-client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
+
+
+# ================= CASHFREE CONFIG =================
+
+from cashfree_pg.api_client import Cashfree
+
+Cashfree.XClientId = "1285932527322e2c31a891425032395821"
+
+Cashfree.XClientSecret = "cfsk_ma_prod_f83850d8e1f7039c1b24a551ed87501b_d2d24e07"
+
+Cashfree.XEnvironment = Cashfree.PRODUCTION
+
 
 
 # DB CONNECTION
@@ -221,6 +235,7 @@ def forgot():
 def logout():
     session.pop('user', None)
     return redirect('/')
+
 
 
 
@@ -544,21 +559,138 @@ def set_default_address(id):
     return redirect('/place-all-order')
 
 
-@app.route('/create-razorpay-order', methods=['POST'])
-def create_razorpay_order():
+# ================= CREATE CASHFREE ORDER =================
+@app.route('/create-cashfree-order', methods=['POST'])
+def create_cashfree_order():
 
-    data = request.get_json()
+    try:
 
-    # FIX HERE 👇
-    amount = float(data['amount']) * 100  # convert to paise
+        if 'user' not in session:
 
-    order = client.order.create({
-        "amount": int(amount),
-        "currency": "INR",
-        "payment_capture": 1
-    })
+            return jsonify({
+                "error": "Please login first"
+            }), 401
 
-    return jsonify(order)
+
+        data = request.get_json()
+
+        amount = float(data['amount'])
+
+        username = session['user']
+
+
+        # ================= ORDER ID =================
+
+        order_id = "ORDER_" + str(int(time.time()))
+
+
+        # ================= DEFAULT DETAILS =================
+
+        customer_phone = "9999999999"
+
+        customer_email = "test@test.com"
+
+
+        # ================= GET ADDRESS =================
+
+        conn = get_db_connection()
+
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("""
+            SELECT * FROM addresses
+            WHERE username=%s
+            AND is_default=1
+        """, (username,))
+
+        address = cursor.fetchone()
+
+        conn.close()
+
+
+        if address:
+
+            customer_phone = str(address['phone'])
+
+            customer_email = str(address['email'])
+
+
+        # ================= CUSTOMER DETAILS =================
+
+        customer_details = CustomerDetails(
+
+            customer_id=str(username),
+
+            customer_phone=customer_phone,
+
+            customer_email=customer_email
+
+        )
+
+
+        # ================= RETURN URL =================
+
+        order_meta = OrderMeta(
+
+            return_url=f"https://yourdomain.com/payment-success/Online?order_id={order_id}"
+
+        )
+
+
+        # ================= ORDER REQUEST =================
+
+        create_order_request = CreateOrderRequest(
+
+            order_id=order_id,
+
+            order_amount=amount,
+
+            order_currency="INR",
+
+            customer_details=customer_details,
+
+            order_meta=order_meta
+
+        )
+
+
+        # ================= CASHFREE INSTANCE =================
+
+        cashfree = Cashfree()
+
+
+        # ================= CREATE ORDER =================
+
+        response = cashfree.PGCreateOrder(
+
+            x_api_version="2023-08-01",
+
+            create_order_request=create_order_request
+
+        )
+
+
+        return jsonify({
+
+            "payment_session_id":
+            response.data.payment_session_id,
+
+            "order_id":
+            order_id
+
+        })
+
+
+    except Exception as e:
+
+        print("CASHFREE ERROR:", e)
+
+        return jsonify({
+
+            "error": str(e)
+
+        }), 500
+    
 
 @app.route('/confirm-order')
 def confirm_order():
@@ -635,7 +767,7 @@ def payment_success(mode):
 
     for item in cart_items:
 
-        # Insert orders
+        # Insert order
         cursor.execute("""
             INSERT INTO orders(
                 username,
@@ -673,7 +805,6 @@ def payment_success(mode):
         ))
 
         order_id = cursor.lastrowid
-
 
         # Insert order items
         cursor.execute("""
@@ -713,8 +844,7 @@ def payment_success(mode):
             mode
         ))
 
-
-        # Reduce stock automatically
+        # Reduce stock
         cursor.execute("""
             UPDATE products
             SET quantity = quantity - %s
@@ -723,7 +853,6 @@ def payment_success(mode):
             item['quantity'],
             item['product_id']
         ))
-
 
     # Clear cart
     cursor.execute("""
@@ -735,35 +864,34 @@ def payment_success(mode):
     conn.close()
 
     return """
-<div style='
-text-align:center;
-margin-top:100px;
-font-family:Arial;
-'>
+    <div style='
+    text-align:center;
+    margin-top:100px;
+    font-family:Arial;
+    '>
 
-<h1 style='color:green;'>
-Order Confirmed Successfully
-</h1>
+    <h1 style='color:green;'>
+    Order Confirmed Successfully
+    </h1>
 
-<br>
+    <br>
 
-<a href='/'
-style='
-background:#1b8f4b;
-color:white;
-padding:14px 28px;
-text-decoration:none;
-border-radius:10px;
-font-size:16px;
-font-weight:bold;
-display:inline-block;
-'>
-Back To Home
-</a>
+    <a href='/'
+    style='
+    background:#1b8f4b;
+    color:white;
+    padding:14px 28px;
+    text-decoration:none;
+    border-radius:10px;
+    font-size:16px;
+    font-weight:bold;
+    display:inline-block;
+    '>
+    Back To Home
+    </a>
 
-</div>
-"""
-
+    </div>
+    """
 
 
 
@@ -1027,16 +1155,51 @@ def manage_products():
 # ================= DELETE PRODUCT =================
 @app.route('/delete-product/<int:id>')
 def delete_product(id):
-    conn = get_db_connection()
-    cursor = conn.cursor()
 
-    cursor.execute("DELETE FROM products WHERE id=%s", (id,))
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # 1. Get all images of product
+    cursor.execute("""
+        SELECT image
+        FROM product_images
+        WHERE product_id=%s
+    """, (id,))
+
+    images = cursor.fetchall()
+
+    # 2. Delete images from disk safely
+    for img in images:
+        if img['image']:
+            file_path = os.path.join(
+                app.config['UPLOAD_FOLDER'],
+                os.path.basename(img['image'])  # only filename
+            )
+
+            if os.path.exists(file_path):
+                try:
+                    os.remove(file_path)
+                except Exception as e:
+                    print("File delete error:", file_path, e)
+
+    # 3. Delete from product_images table
+    cursor.execute("""
+        DELETE FROM product_images
+        WHERE product_id=%s
+    """, (id,))
+
+    # 4. Delete from products table
+    cursor.execute("""
+        DELETE FROM products
+        WHERE id=%s
+    """, (id,))
+
     conn.commit()
+
+    cursor.close()
     conn.close()
 
-    return redirect('/manage-products')
-
-
+    return redirect('/admin/products')
 # ================= EDIT PRODUCT =================
 @app.route('/edit-product/<int:id>', methods=['GET', 'POST'])
 def edit_product(id):

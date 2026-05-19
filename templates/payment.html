@@ -2,6 +2,7 @@
 <html>
 <head>
 <title>Payment</title>
+
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
@@ -51,6 +52,20 @@ font-weight:bold;
 margin:20px 0;
 }
 
+.extra{
+font-size:16px;
+color:#ff6600;
+margin-top:10px;
+font-weight:bold;
+}
+
+.final-total{
+font-size:30px;
+color:#111;
+margin-top:15px;
+font-weight:bold;
+}
+
 button{
 width:100%;
 padding:16px;
@@ -67,7 +82,7 @@ font-weight:bold;
 background:#ff6600;
 }
 
-.razor{
+.cashfree{
 background:#1b8f4b;
 }
 
@@ -81,6 +96,15 @@ body{
 padding:15px;
 }
 
+.item{
+flex-direction:column;
+}
+
+.item img{
+width:100%;
+height:250px;
+}
+
 }
 
 </style>
@@ -88,6 +112,8 @@ padding:15px;
 <body>
 
 <div class="container">
+
+<!-- LEFT -->
 
 <div class="left">
 
@@ -101,9 +127,19 @@ padding:15px;
 
 <div>
 <h3>{{ p.name }}</h3>
-<p>Qty : {{ p.quantity }}</p>
-<p>₹ {{ p.price }}</p>
-<p>Total : ₹ {{ p.price * p.quantity }}</p>
+
+<p>
+Qty : {{ p.quantity }}
+</p>
+
+<p>
+Price : ₹ {{ p.price }}
+</p>
+
+<p>
+Total : ₹ {{ p.price * p.quantity }}
+</p>
+
 </div>
 
 </div>
@@ -113,83 +149,100 @@ padding:15px;
 </div>
 
 
+<!-- RIGHT -->
+
 <div class="right">
 
 <h2>Payment</h2>
 
 <div class="total">
-Grand Total : ₹{{ total }}
+Cart Total : ₹{{ total }}
 </div>
 
-<a href="/payment-success/Cash On Delivery">
-<button class="cod">
-Cash On Delivery
+<div class="extra">
+Online Payment Charge : ₹3
+</div>
+
+<div class="final-total">
+Final Total : ₹{{ total + 3 }}
+</div>
+
+
+
+
+
+<!-- CASHFREE -->
+
+<script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+
+<button class="cashfree" onclick="payNow()">
+Pay Online
 </button>
-</a>
-
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-
-<button class="razor" onclick="payNow()">
-Pay With Razorpay
-</button>
 
 </div>
 
 </div>
+
+<script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 
 <script>
-function payNow() {
 
-    fetch("/create-razorpay-order", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            amount: "{{ total }}"
-        })
-    })
-    .then(res => res.json())
-    .then(order => {
+async function payNow(){
 
-        var options = {
-            "key": "rzp_test_SpMXL5VFY8LN9c",
-            "amount": order.amount,
-            "currency": "INR",
-            "name": "Akki Latest Collections",
-            "description": "Order Payment",
-            "order_id": order.id,
+    let finalAmount = Number("{{ total }}") + 3;
 
-            // ✅ THIS ENABLES UPI, CARD, NETBANKING
-            "method": {
-                upi: true,
-                card: true,
-                netbanking: true,
-                wallet: true
+    try{
+
+        const response = await fetch("/create-cashfree-order",{
+
+            method:"POST",
+
+            headers:{
+                "Content-Type":"application/json"
             },
 
-            "prefill": {
-                "name": "",
-                "email": "",
-                "contact": ""
-            },
+            body:JSON.stringify({
+                amount:finalAmount
+            })
 
-            "theme": {
-                "color": "#1b8f4b"
-            },
+        });
 
-            "handler": function (response) {
+        const data = await response.json();
 
-                // Payment success
-                window.location.href = "/payment-success/Online";
-            }
-        };
+        if(data.error){
 
-        var rzp = new Razorpay(options);
-        rzp.open();
-    });
+            alert(data.error);
+
+            return;
+
+        }
+
+        const cashfree = Cashfree({
+
+            mode:"production"
+
+        });
+
+        cashfree.checkout({
+
+            paymentSessionId:data.payment_session_id,
+
+            redirectTarget:"_self"
+
+        });
+
+    }
+
+    catch(error){
+
+        console.log(error);
+
+        alert("Payment Failed");
+
+    }
 
 }
+
 </script>
 
 </body>

@@ -136,18 +136,6 @@ color:#1b8f4b;
 
 .place-btn{
 width:100%;
-padding:16px;
-background:#ff6600;
-color:white;
-border:none;
-font-size:18px;
-border-radius:10px;
-cursor:pointer;
-margin-top:20px;
-}
-
-.place-btn{
-width:100%;
 padding:18px;
 background:linear-gradient(45deg,#1b8f4b,#28c76f);
 color:white;
@@ -169,36 +157,87 @@ box-shadow:0 10px 25px rgba(27,143,75,.35);
 transform:scale(.98);
 }
 
-@media(max-width:768px){
-.place-btn{
-font-size:16px;
-padding:15px;
-}
-}
-
-/* MOBILE */
 @media(max-width:900px){
 
 .wrapper{
-grid-template-columns:1fr;
-}
-
-.cart-card{
+display:flex;
 flex-direction:column;
-text-align:center;
 }
 
-.cart-card img{
+.cart-container{
+order:1;
 width:100%;
-height:250px;
-}
-
-.qty-box{
-justify-content:center;
 }
 
 .summary{
+order:2;
+width:100%;
 position:static;
+margin-top:20px;
+}
+
+.cart-card{
+display:flex;
+flex-direction:row;   /* keep image + details same row */
+align-items:flex-start;
+text-align:left;
+gap:15px;
+padding:15px;
+}
+
+.cart-card img{
+width:120px;
+height:150px;
+object-fit:contain;
+}
+
+.details{
+flex:1;
+}
+
+.details h3{
+font-size:18px;
+margin-bottom:8px;
+}
+
+.details p{
+font-size:14px;
+}
+
+.price{
+font-size:18px;
+}
+
+.qty-box{
+justify-content:flex-start;
+flex-wrap:wrap;
+gap:8px;
+}
+
+.qty-box a{
+padding:6px 10px;
+font-size:14px;
+}
+
+.delete-btn{
+margin-left:0;
+}
+
+.summary h2{
+font-size:22px;
+}
+
+.row{
+font-size:16px;
+}
+
+.total{
+font-size:20px;
+}
+
+.place-btn{
+font-size:16px;
+padding:15px;
 }
 
 }
@@ -218,16 +257,17 @@ position:static;
 <div class="cart-container">
 
 {% set grand_total = namespace(value=0) %}
+{% set total_qty = namespace(value=0) %}
 
 {% for p in products %}
 
 {% set total = p.price * p.cart_qty %}
 {% set grand_total.value = grand_total.value + total %}
+{% set total_qty.value = total_qty.value + p.cart_qty %}
 
 <div class="cart-card">
 
-<img src="{{ url_for('static',
-filename=p.images[0]) }}">
+<img src="{{ url_for('static', filename=p.images[0]) }}">
 
 <div class="details">
 
@@ -261,7 +301,6 @@ Total: <b>₹{{ total }}</b>
 </p>
 
 </div>
-
 </div>
 
 {% endfor %}
@@ -276,27 +315,36 @@ Total: <b>₹{{ total }}</b>
 
 <div class="row">
 <span>Items</span>
-<span>{{ products|length }}</span>
+<span>{{ total_qty.value }}</span>
 </div>
+
+{% if total_qty.value == 1 %}
+    {% set shipping = 50 %}
+{% else %}
+    {% set shipping = 0 %}
+{% endif %}
 
 <div class="row">
 <span>Delivery</span>
-<span>Free</span>
+
+{% if shipping == 0 %}
+<span style="color:green;font-weight:bold;">Free</span>
+{% else %}
+<span>₹{{ shipping }}</span>
+{% endif %}
+
 </div>
 
 <hr>
 
 <div class="row total">
 <span>Total</span>
-<span>₹{{ grand_total.value }}</span>
+<span>₹{{ grand_total.value + shipping }}</span>
 </div>
 
 <a href="/place-all-order">
-    <button class="place-btn">
-        Proceed To Checkout
-    </button>
-</a>
-
+<button class="place-btn">
+Proceed To Checkout
 </button>
 </a>
 
