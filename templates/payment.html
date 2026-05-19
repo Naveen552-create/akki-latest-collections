@@ -209,6 +209,8 @@ async function payNow(){
 
         const data = await response.json();
 
+        console.log(data);
+
         if(data.error){
 
             alert(data.error);
@@ -219,7 +221,7 @@ async function payNow(){
 
         const cashfree = Cashfree({
 
-            mode:"production"
+            mode:"sandbox"
 
         });
 

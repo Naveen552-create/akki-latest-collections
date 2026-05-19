@@ -36,14 +36,16 @@ app.config['CAROUSEL_FOLDER'] = 'static/carousel'
 
 # ================= CASHFREE CONFIG =================
 
-from cashfree_pg.api_client import Cashfree
+Cashfree.XClientId = "TEST110799425470798493d0afe4dde624997011"
 
-Cashfree.XClientId = "1285932527322e2c31a891425032395821"
+Cashfree.XClientSecret = "cfsk_ma_test_9f329490b10dda7036ea6c2ac98a61be_6e92893f"
 
-Cashfree.XClientSecret = "cfsk_ma_prod_f83850d8e1f7039c1b24a551ed87501b_d2d24e07"
+Cashfree.XEnvironment = Cashfree.SANDBOX
 
-Cashfree.XEnvironment = Cashfree.PRODUCTION
 
+Cashfree.XClientId = os.environ.get("CASHFREE_CLIENT_ID")
+
+Cashfree.XClientSecret = os.environ.get("CASHFREE_CLIENT_SECRET")
 
 
 # DB CONNECTION
@@ -565,12 +567,16 @@ def create_cashfree_order():
 
     try:
 
+        # ================= LOGIN CHECK =================
+
         if 'user' not in session:
 
             return jsonify({
                 "error": "Please login first"
             }), 401
 
+
+        # ================= GET REQUEST DATA =================
 
         data = request.get_json()
 
@@ -579,19 +585,19 @@ def create_cashfree_order():
         username = session['user']
 
 
-        # ================= ORDER ID =================
+        # ================= CREATE UNIQUE ORDER ID =================
 
         order_id = "ORDER_" + str(int(time.time()))
 
 
-        # ================= DEFAULT DETAILS =================
+        # ================= DEFAULT CUSTOMER DETAILS =================
 
         customer_phone = "9999999999"
 
         customer_email = "test@test.com"
 
 
-        # ================= GET ADDRESS =================
+        # ================= GET DEFAULT ADDRESS =================
 
         conn = get_db_connection()
 
@@ -607,6 +613,8 @@ def create_cashfree_order():
 
         conn.close()
 
+
+        # ================= UPDATE CUSTOMER DETAILS =================
 
         if address:
 
@@ -624,7 +632,6 @@ def create_cashfree_order():
             customer_phone=customer_phone,
 
             customer_email=customer_email
-
         )
 
 
@@ -633,7 +640,6 @@ def create_cashfree_order():
         order_meta = OrderMeta(
 
             return_url=f"https://akkilatestcollections.com/payment-success/Online?order_id={order_id}"
-
         )
 
 
@@ -650,13 +656,16 @@ def create_cashfree_order():
             customer_details=customer_details,
 
             order_meta=order_meta
-
         )
 
 
         # ================= CASHFREE INSTANCE =================
 
-        cashfree = Cashfree()
+        cashfree = Cashfree(
+            XClientId=Cashfree.XClientId,
+            XClientSecret=Cashfree.XClientSecret,
+            XEnvironment=Cashfree.XEnvironment
+        )
 
 
         # ================= CREATE ORDER =================
@@ -666,9 +675,10 @@ def create_cashfree_order():
             x_api_version="2023-08-01",
 
             create_order_request=create_order_request
-
         )
 
+
+        # ================= SUCCESS RESPONSE =================
 
         return jsonify({
 
@@ -677,7 +687,6 @@ def create_cashfree_order():
 
             "order_id":
             order_id
-
         })
 
 
@@ -689,8 +698,9 @@ def create_cashfree_order():
 
             "error": str(e)
 
-        }), 500
-    
+        }), 500   
+
+
 
 @app.route('/confirm-order')
 def confirm_order():
