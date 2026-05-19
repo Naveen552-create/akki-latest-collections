@@ -17,9 +17,12 @@ def force_https():
         return redirect(request.url.replace("http://", "https://", 1), code=301)
 
 
-# Upload folder
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+# Render persistent disk path
+UPLOAD_FOLDER = '/opt/render/project/src/static/uploads'
+
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 app.config['CAROUSEL_FOLDER'] = 'static/carousel'
 
@@ -48,29 +51,31 @@ def home():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    # Carousel
     cursor.execute("""
-        SELECT * FROM carousel
-        ORDER BY created_at DESC
+        SELECT *
+        FROM carousel
+        ORDER BY id DESC
     """)
     carousel_items = cursor.fetchall()
 
-    # Products
     cursor.execute("""
         SELECT
             p.id,
+            p.name,
+            p.price,
+            p.quantity,
             c.name AS category,
             s.name AS subcategory,
             GROUP_CONCAT(pi.image) AS images
         FROM products p
         LEFT JOIN categories c
-            ON p.category_id = c.id
+            ON p.category_id=c.id
         LEFT JOIN subcategories s
-            ON p.subcategory_id = s.id
+            ON p.subcategory_id=s.id
         LEFT JOIN product_images pi
-            ON p.id = pi.product_id
-        WHERE p.show_home = 1
-        AND p.quantity > 0
+            ON p.id=pi.product_id
+        WHERE p.show_home=1
+        AND p.quantity>0
         GROUP BY p.id
         ORDER BY p.id DESC
     """)
@@ -84,21 +89,20 @@ def home():
             else []
         )
 
-    # CORRECT CART COUNT
     cart_count = 0
 
     if 'user' in session:
-        username = session['user']
 
         cursor.execute("""
-            SELECT SUM(quantity) as total
+            SELECT SUM(quantity) AS total
             FROM cart
             WHERE username=%s
-        """, (username,))
+        """, (session['user'],))
 
         result = cursor.fetchone()
 
-        cart_count = result['total'] if result['total'] else 0
+        if result and result['total']:
+            cart_count = result['total']
 
     cursor.close()
     conn.close()
@@ -109,7 +113,6 @@ def home():
         carousel_items=carousel_items,
         cart_count=cart_count
     )
-
 
 
 # LOGIN
@@ -227,7 +230,6 @@ def product_details(id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    # Current Product
     cursor.execute("""
         SELECT
             p.*,
@@ -248,7 +250,6 @@ def product_details(id):
         conn.close()
         return "Product not found"
 
-    # Product Images
     cursor.execute("""
         SELECT image
         FROM product_images
@@ -256,44 +257,35 @@ def product_details(id):
         ORDER BY id ASC
     """, (id,))
 
-    images = cursor.fetchall()
-
     product['images'] = [
         img['image']
-        for img in images
+        for img in cursor.fetchall()
         if img['image']
     ]
 
-    # Related Products
     cursor.execute("""
         SELECT
             p.id,
             p.name,
             p.price,
-            GROUP_CONCAT(
-                pi.image
-                ORDER BY pi.id ASC
-            ) AS images
+            GROUP_CONCAT(pi.image) AS images
         FROM products p
         LEFT JOIN product_images pi
             ON p.id = pi.product_id
         WHERE p.category_id=%s
         AND p.id!=%s
         GROUP BY p.id
-        ORDER BY p.created_at DESC
-    """, (
-        product['category_id'],
-        id
-    ))
+        ORDER BY p.id DESC
+    """, (product['category_id'], id))
 
     related_products = cursor.fetchall()
 
     for item in related_products:
-
-        if item['images']:
-            item['images'] = item['images'].split(',')
-        else:
-            item['images'] = []
+        item['images'] = (
+            item['images'].split(',')
+            if item['images']
+            else []
+        )
 
     cursor.close()
     conn.close()
@@ -303,7 +295,6 @@ def product_details(id):
         product=product,
         related_products=related_products
     )
-
 
 
 

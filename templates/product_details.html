@@ -681,29 +681,24 @@ height:220px;
 </div>
 
 <!-- MAIN CONTAINER -->
-
 <div class="container">
 
-<!-- PRODUCT TITLE -->
-
-<div class="product-info">
-
-<h1 class="product-title">
-{{ product.name }}
-</h1>
-
-</div>
-
-<!-- IMAGE SECTION -->
-
+<!-- IMAGE -->
 <div class="image-section">
 
+{% if product.images %}
 <img id="main"
 src="{{ url_for('static', filename=product.images[0]) }}"
 class="main-image">
+{% else %}
+<img id="main"
+src="{{ url_for('static', filename='no-image.png') }}"
+class="main-image">
+{% endif %}
 
 <div class="thumb-wrap">
 
+{% if product.images %}
 {% for img in product.images %}
 
 <img
@@ -712,14 +707,18 @@ class="thumb"
 onclick="changeImage(this.src)">
 
 {% endfor %}
+{% endif %}
 
 </div>
 
 </div>
 
-<!-- PRODUCT DETAILS -->
-
+<!-- DETAILS -->
 <div class="product-details">
+
+<h1 class="product-title">
+{{ product.name }}
+</h1>
 
 <h3 class="category">
 {{ product.category }}
@@ -746,38 +745,24 @@ See More
 <b>Stock:</b>
 
 {% if product.quantity == 0 %}
-
-<span style="color:red;">
-Out Of Stock
-</span>
-
+<span style="color:red;">Out Of Stock</span>
 {% else %}
-
 {{ product.quantity }}
-
 {% endif %}
 
 </p>
 
-<div class="btn-wrap">
-
 <button class="cart-btn"
 onclick="openCart()">
-
 <i class="fa fa-shopping-cart"></i>
-
 Add To Cart
-
 </button>
 
 </div>
 
 </div>
 
-</div>
-
-<!-- RELATED PRODUCTS -->
-
+<!-- RELATED -->
 <div class="related">
 
 <h2>Related Products</h2>
@@ -792,15 +777,12 @@ style="text-decoration:none;color:black;">
 <div class="related-card">
 
 {% if item.images %}
-
-<img
-src="{{ url_for('static',
-filename=item.images[0]) }}">
-
+<img src="{{ url_for('static', filename=item.images[0]) }}">
+{% else %}
+<img src="{{ url_for('static', filename='no-image.png') }}">
 {% endif %}
 
 <h4>{{ item.name }}</h4>
-
 <p>₹{{ item.price }}</p>
 
 </div>
