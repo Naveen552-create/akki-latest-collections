@@ -127,30 +127,56 @@ def home():
     )
 
 
-# LOGIN
+# ================= LOGIN =================
 @app.route('/login', methods=['POST'])
 def login():
+
     username = request.form.get('username')
     password = request.form.get('password')
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    cursor.execute(
-        "SELECT * FROM users WHERE username=%s AND password=%s",
-        (username, password)
-    )
+    cursor.execute("""
+        SELECT *
+        FROM users
+        WHERE username=%s AND password=%s
+    """, (
+        username,
+        password
+    ))
 
     user = cursor.fetchone()
 
     cursor.close()
     conn.close()
 
+    # LOGIN SUCCESS
     if user:
+
         session['user'] = user['username']
-        return jsonify({"status": "success"})
+
+        # RETURN TO PREVIOUS PAGE
+        next_url = session.pop('next_url', None)
+
+        return jsonify({
+            "status": "success",
+            "redirect": next_url if next_url else "/"
+        })
+
+    # LOGIN FAILED
     else:
-        return jsonify({"status": "fail"})
+
+        return jsonify({
+            "status": "fail"
+        })
+  
+
+
+@app.route('/login-page')
+def login_page():
+    return render_template('login.html')
+
 
 
 # REGISTER
@@ -360,47 +386,90 @@ GROUP BY cart.id
         products=products
     )
 
-
+# ================= ADD TO CART =================
 @app.route('/add-to-cart/<int:id>/<int:qty>')
-def add_to_cart(id,qty):
+def add_to_cart(id, qty):
 
+    # LOGIN CHECK
     if 'user' not in session:
-        return redirect('/')
 
-    username=session['user']
+        # SAVE CURRENT URL
+        session['next_url'] = request.url
 
-    conn=get_db_connection()
-    cursor=conn.cursor(dictionary=True)
+        return redirect('/login-page')
 
+    username = session['user']
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # GET PRODUCT
     cursor.execute("""
-        SELECT category_id,subcategory_id
+        SELECT category_id, subcategory_id
         FROM products
         WHERE id=%s
-    """,(id,))
+    """, (id,))
 
-    product=cursor.fetchone()
+    product = cursor.fetchone()
 
+    # PRODUCT NOT FOUND
+    if not product:
+
+        conn.close()
+
+        return redirect('/')
+
+    # CHECK PRODUCT ALREADY IN CART
     cursor.execute("""
-        INSERT INTO cart
-        (username,product_id,category_id,
-         subcategory_id,quantity)
-        VALUES(%s,%s,%s,%s,%s)
-    """,(
+        SELECT * FROM cart
+        WHERE username=%s AND product_id=%s
+    """, (
         username,
-        id,
-        product['category_id'],
-        product['subcategory_id'],
-        qty
+        id
     ))
 
+    existing = cursor.fetchone()
+
+    # UPDATE QUANTITY
+    if existing:
+
+        cursor.execute("""
+            UPDATE cart
+            SET quantity = quantity + %s
+            WHERE username=%s AND product_id=%s
+        """, (
+            qty,
+            username,
+            id
+        ))
+
+    # INSERT NEW PRODUCT
+    else:
+
+        cursor.execute("""
+            INSERT INTO cart(
+                username,
+                product_id,
+                category_id,
+                subcategory_id,
+                quantity
+            )
+            VALUES(%s,%s,%s,%s,%s)
+        """, (
+            username,
+            id,
+            product['category_id'],
+            product['subcategory_id'],
+            qty
+        ))
+
     conn.commit()
-
-
-
     conn.close()
 
     return redirect('/cart')
 
+
+  
 
 
 @app.route('/increase-cart/<int:id>')
@@ -658,23 +727,42 @@ def confirm_order():
             ON p.id=pi.product_id
         WHERE cart.username=%s
         GROUP BY cart.id
-    """,(username,))
+    """, (username,))
 
     products = cursor.fetchall()
 
-    total = 0
+    subtotal = 0
 
     for p in products:
-        p['images'] = p['images'].split(',') if p['images'] else []
-        total += p['price'] * p['quantity']
+
+        p['images'] = (
+            p['images'].split(',')
+            if p['images'] else []
+        )
+
+        subtotal += p['price'] * p['quantity']
 
     conn.close()
+
+    # ================= SHIPPING =================
+    shipping = 50 if subtotal > 0 else 0
+
+    # ================= PLATFORM FEE =================
+    platform_fee = 3
+
+    # ================= FINAL TOTAL =================
+    total = subtotal + shipping + platform_fee
 
     return render_template(
         'payment.html',
         products=products,
+        subtotal=subtotal,
+        shipping=shipping,
+        platform_fee=platform_fee,
         total=total
     )
+
+
 
 
 @app.route('/payment-success/<mode>')
@@ -685,156 +773,189 @@ def payment_success(mode):
 
     username = session['user']
 
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    # ================= GET ORDER ID =================
+    cashfree_order_id = request.args.get("order_id")
 
-    # Default address
-    cursor.execute("""
-        SELECT * FROM addresses
-        WHERE username=%s AND is_default=1
-    """,(username,))
+    if not cashfree_order_id:
+        return redirect('/cart')
 
-    address = cursor.fetchone()
+    try:
 
-    if not address:
-        return redirect('/place-all-order')
+        # ================= VERIFY PAYMENT =================
+        cashfree = Cashfree(
+            XClientId=Cashfree.XClientId,
+            XClientSecret=Cashfree.XClientSecret,
+            XEnvironment=Cashfree.XEnvironment
+        )
 
-    # Cart items
-    cursor.execute("""
-        SELECT * FROM cart
-        WHERE username=%s
-    """,(username,))
+        response = cashfree.PGFetchOrder(
+            x_api_version="2023-08-01",
+            order_id=cashfree_order_id
+        )
 
-    cart_items = cursor.fetchall()
+        order_status = response.data.order_status
 
-    for item in cart_items:
+        # ================= PAYMENT FAILED/CANCELLED =================
+        if order_status != "PAID":
 
-        # Insert order
+            return redirect('/cart')
+
+        # ================= PAYMENT SUCCESS =================
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # DEFAULT ADDRESS
         cursor.execute("""
-            INSERT INTO orders(
+            SELECT * FROM addresses
+            WHERE username=%s AND is_default=1
+        """, (username,))
+
+        address = cursor.fetchone()
+
+        if not address:
+            return redirect('/place-all-order')
+
+        # CART ITEMS
+        cursor.execute("""
+            SELECT * FROM cart
+            WHERE username=%s
+        """, (username,))
+
+        cart_items = cursor.fetchall()
+
+        for item in cart_items:
+
+            # INSERT ORDER
+            cursor.execute("""
+                INSERT INTO orders(
+                    username,
+                    product_id,
+                    category_id,
+                    subcategory_id,
+                    quantity,
+                    full_name,
+                    phone,
+                    email,
+                    country,
+                    state,
+                    city,
+                    pincode,
+                    landmark,
+                    payment_mode,
+                    order_status
+                )
+                VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'Confirmed')
+            """, (
                 username,
-                product_id,
-                category_id,
-                subcategory_id,
-                quantity,
-                full_name,
-                phone,
-                email,
-                country,
-                state,
-                city,
-                pincode,
-                landmark,
-                payment_mode,
-                order_status
-            )
-            VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'Confirmed')
-        """,(
-            username,
-            item['product_id'],
-            item['category_id'],
-            item['subcategory_id'],
-            item['quantity'],
-            address['full_name'],
-            address['phone'],
-            address['email'],
-            address['country'],
-            address['state'],
-            address['city'],
-            address['pincode'],
-            address['landmark'],
-            mode
-        ))
+                item['product_id'],
+                item['category_id'],
+                item['subcategory_id'],
+                item['quantity'],
+                address['full_name'],
+                address['phone'],
+                address['email'],
+                address['country'],
+                address['state'],
+                address['city'],
+                address['pincode'],
+                address['landmark'],
+                mode
+            ))
 
-        order_id = cursor.lastrowid
+            order_id = cursor.lastrowid
 
-        # Insert order items
-        cursor.execute("""
-            INSERT INTO order_items(
+            # INSERT ORDER ITEMS
+            cursor.execute("""
+                INSERT INTO order_items(
+                    order_id,
+                    username,
+                    product_id,
+                    category_id,
+                    subcategory_id,
+                    quantity,
+                    full_name,
+                    phone,
+                    email,
+                    country,
+                    state,
+                    city,
+                    pincode,
+                    landmark,
+                    payment_mode
+                )
+                VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            """, (
                 order_id,
                 username,
-                product_id,
-                category_id,
-                subcategory_id,
-                quantity,
-                full_name,
-                phone,
-                email,
-                country,
-                state,
-                city,
-                pincode,
-                landmark,
-                payment_mode
-            )
-            VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-        """,(
-            order_id,
-            username,
-            item['product_id'],
-            item['category_id'],
-            item['subcategory_id'],
-            item['quantity'],
-            address['full_name'],
-            address['phone'],
-            address['email'],
-            address['country'],
-            address['state'],
-            address['city'],
-            address['pincode'],
-            address['landmark'],
-            mode
-        ))
+                item['product_id'],
+                item['category_id'],
+                item['subcategory_id'],
+                item['quantity'],
+                address['full_name'],
+                address['phone'],
+                address['email'],
+                address['country'],
+                address['state'],
+                address['city'],
+                address['pincode'],
+                address['landmark'],
+                mode
+            ))
 
-        # Reduce stock
+            # REDUCE STOCK
+            cursor.execute("""
+                UPDATE products
+                SET quantity = quantity - %s
+                WHERE id=%s
+            """, (
+                item['quantity'],
+                item['product_id']
+            ))
+
+        # CLEAR CART
         cursor.execute("""
-            UPDATE products
-            SET quantity = quantity - %s
-            WHERE id=%s
-        """,(
-            item['quantity'],
-            item['product_id']
-        ))
+            DELETE FROM cart
+            WHERE username=%s
+        """, (username,))
 
-    # Clear cart
-    cursor.execute("""
-        DELETE FROM cart
-        WHERE username=%s
-    """,(username,))
+        conn.commit()
+        conn.close()
 
-    conn.commit()
-    conn.close()
+        return """
+        <div style='
+        text-align:center;
+        margin-top:100px;
+        font-family:Arial;
+        '>
 
-    return """
-    <div style='
-    text-align:center;
-    margin-top:100px;
-    font-family:Arial;
-    '>
+        <h1 style='color:green;'>
+        Order Confirmed Successfully
+        </h1>
 
-    <h1 style='color:green;'>
-    Order Confirmed Successfully
-    </h1>
+        <br>
 
-    <br>
+        <a href='/'
+        style='
+        background:#1b8f4b;
+        color:white;
+        padding:14px 28px;
+        text-decoration:none;
+        border-radius:10px;
+        font-size:16px;
+        font-weight:bold;
+        display:inline-block;
+        '>
+        Back To Home
+        </a>
 
-    <a href='/'
-    style='
-    background:#1b8f4b;
-    color:white;
-    padding:14px 28px;
-    text-decoration:none;
-    border-radius:10px;
-    font-size:16px;
-    font-weight:bold;
-    display:inline-block;
-    '>
-    Back To Home
-    </a>
+        </div>
+        """
 
-    </div>
-    """
+    except Exception as e:
 
+        print("PAYMENT VERIFY ERROR:", e)
+
+        return redirect('/cart')
 
 
 # ================= ADMIN LOGIN PAGE =================
