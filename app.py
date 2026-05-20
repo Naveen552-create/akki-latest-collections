@@ -41,7 +41,7 @@ Cashfree.XClientId = os.environ.get("CASHFREE_CLIENT_ID")
 
 Cashfree.XClientSecret = os.environ.get("CASHFREE_CLIENT_SECRET")
 
-Cashfree.XEnvironment = Cashfree.SANDBOX
+Cashfree.XEnvironment = Cashfree.PRODUCTION
 
 
 # DB CONNECTION
