@@ -563,99 +563,51 @@ def create_cashfree_order():
 
     try:
 
-        # ================= LOGIN CHECK =================
-
         if 'user' not in session:
-
-            return jsonify({
-                "error": "Please login first"
-            }), 401
-
-
-        # ================= GET REQUEST DATA =================
+            return jsonify({"error": "Please login first"}), 401
 
         data = request.get_json()
-
         amount = float(data['amount'])
-
         username = session['user']
-
-
-        # ================= CREATE UNIQUE ORDER ID =================
 
         order_id = "ORDER_" + str(int(time.time()))
 
-
-        # ================= DEFAULT CUSTOMER DETAILS =================
-
         customer_phone = "9999999999"
-
         customer_email = "test@test.com"
 
-
-        # ================= GET DEFAULT ADDRESS =================
-
         conn = get_db_connection()
-
         cursor = conn.cursor(dictionary=True)
 
         cursor.execute("""
             SELECT * FROM addresses
-            WHERE username=%s
-            AND is_default=1
+            WHERE username=%s AND is_default=1
         """, (username,))
 
         address = cursor.fetchone()
 
         conn.close()
 
-
-        # ================= UPDATE CUSTOMER DETAILS =================
-
         if address:
-
             customer_phone = str(address['phone'])
-
             customer_email = str(address['email'])
 
-
-        # ================= CUSTOMER DETAILS =================
-
         customer_details = CustomerDetails(
-
             customer_id=str(username),
-
             customer_phone=customer_phone,
-
             customer_email=customer_email
         )
 
-
-        # ================= RETURN URL =================
-
         order_meta = OrderMeta(
-
             return_url=f"https://akkilatestcollections.com/payment-success/Online?order_id={order_id}"
         )
 
-
-        # ================= ORDER REQUEST =================
-
         create_order_request = CreateOrderRequest(
-
             order_id=order_id,
-
             order_amount=amount,
-
             order_currency="INR",
-
             customer_details=customer_details,
-
             order_meta=order_meta
         )
-
-
-        # ================= CASHFREE INSTANCE =================
 
         cashfree = Cashfree(
             XClientId=Cashfree.XClientId,
@@ -663,38 +615,22 @@ def create_cashfree_order():
             XEnvironment=Cashfree.XEnvironment
         )
 
-
-        # ================= CREATE ORDER =================
-
         response = cashfree.PGCreateOrder(
-
             x_api_version="2023-08-01",
-
             create_order_request=create_order_request
         )
 
-
-        # ================= SUCCESS RESPONSE =================
-
         return jsonify({
-
-            "payment_session_id":
-            response.data.payment_session_id,
-
-            "order_id":
-            order_id
+            "payment_session_id": response.data.payment_session_id,
+            "order_id": order_id
         })
 
-
     except Exception as e:
-
         print("CASHFREE ERROR:", e)
 
         return jsonify({
-
             "error": str(e)
-
-        }), 500   
+        }), 500
 
 
 

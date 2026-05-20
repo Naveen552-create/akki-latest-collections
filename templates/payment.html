@@ -194,17 +194,13 @@ async function payNow(){
     try{
 
         const response = await fetch("/create-cashfree-order",{
-
             method:"POST",
-
             headers:{
                 "Content-Type":"application/json"
             },
-
             body:JSON.stringify({
                 amount:finalAmount
             })
-
         });
 
         const data = await response.json();
@@ -212,35 +208,24 @@ async function payNow(){
         console.log(data);
 
         if(data.error){
-
             alert(data.error);
-
             return;
-
         }
 
         const cashfree = Cashfree({
-
-            mode:"sandbox"
-
+            mode:"production"
         });
 
         cashfree.checkout({
-
             paymentSessionId:data.payment_session_id,
-
             redirectTarget:"_self"
-
         });
 
     }
 
     catch(error){
-
         console.log(error);
-
         alert("Payment Failed");
-
     }
 
 }
