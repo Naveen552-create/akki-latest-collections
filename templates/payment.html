@@ -151,7 +151,11 @@ Order Summary
 
 <div class="item">
 
-<img src="{{ url_for('static', filename=p.images[0]) if p.images else '' }}">
+<img
+src="{{ url_for('static', filename=p.images[0]) if p.images else url_for('static', filename='no-image.png') }}"
+loading="lazy"
+decoding="async"
+alt="{{ p.name }}">
 
 <div>
 

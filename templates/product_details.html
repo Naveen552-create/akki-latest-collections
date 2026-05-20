@@ -689,11 +689,17 @@ height:220px;
 {% if product.images %}
 <img id="main"
 src="{{ url_for('static', filename=product.images[0]) }}"
-class="main-image">
+class="main-image"
+loading="lazy"
+decoding="async"
+alt="{{ product.name }}">
 {% else %}
 <img id="main"
 src="{{ url_for('static', filename='no-image.png') }}"
-class="main-image">
+class="main-image"
+loading="lazy"
+decoding="async"
+alt="No Image">
 {% endif %}
 
 <div class="thumb-wrap">
@@ -704,6 +710,9 @@ class="main-image">
 <img
 src="{{ url_for('static', filename=img) }}"
 class="thumb"
+loading="lazy"
+decoding="async"
+alt="{{ product.name }}"
 onclick="changeImage(this.src)">
 
 {% endfor %}
@@ -777,9 +786,15 @@ style="text-decoration:none;color:black;">
 <div class="related-card">
 
 {% if item.images %}
-<img src="{{ url_for('static', filename=item.images[0]) }}">
+<img src="{{ url_for('static', filename=item.images[0]) }}"
+loading="lazy"
+decoding="async"
+alt="{{ item.name }}">
 {% else %}
-<img src="{{ url_for('static', filename='no-image.png') }}">
+<img src="{{ url_for('static', filename='no-image.png') }}"
+loading="lazy"
+decoding="async"
+alt="No Image">
 {% endif %}
 
 <h4>{{ item.name }}</h4>
@@ -794,7 +809,6 @@ style="text-decoration:none;color:black;">
 </div>
 
 </div>
-
 <!-- CART POPUP -->
 
 <div class="cart-popup"
@@ -812,7 +826,10 @@ onclick="closeCart()">
 <img
 src="{{ url_for('static',
 filename=product.images[0]) }}"
-class="cart-img">
+class="cart-img"
+loading="lazy"
+decoding="async"
+alt="{{ product.name }}">
 
 <h2>{{ product.name }}</h2>
 

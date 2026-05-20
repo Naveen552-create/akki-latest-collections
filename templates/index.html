@@ -1188,9 +1188,12 @@
         {% for product in products %}
         <div class="card">
 
-            {% if product.images %}
-                <img src="{{ url_for('static', filename=product.images[0]) }}">
-            {% endif %}
+{% if product.images %}
+    <img src="{{ url_for('static', filename=product.images[0]) }}"
+         loading="lazy"
+         decoding="async"
+         alt="{{ product.name }}">
+{% endif %}
 
             <div class="card-content">
                 <h3>{{ product.category }}</h3>

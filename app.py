@@ -6,6 +6,7 @@ from werkzeug.utils import secure_filename
 from flask import *
 from collections import defaultdict
 from flask import jsonify
+from PIL import Image
 from cashfree_pg.api_client import Cashfree
 from cashfree_pg.models.create_order_request import CreateOrderRequest
 from cashfree_pg.models.customer_details import CustomerDetails
@@ -29,6 +30,10 @@ UPLOAD_FOLDER = os.path.join('static', 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+app.config['MAX_CONTENT_LENGTH'] = 15 * 1024 * 1024
+
+
 
 app.config['CAROUSEL_FOLDER'] = 'static/carousel'
 
@@ -1171,9 +1176,32 @@ def adding_product_page():
 
 
 
+# ================= IMAGE OPTIMIZER =================
+def save_optimized_image(file, upload_folder):
+
+    img = Image.open(file)
+
+    if img.mode in ("RGBA", "P"):
+        img = img.convert("RGB")
+
+    img.thumbnail((1200, 1200))
+
+    filename = f"{uuid.uuid4().hex}.webp"
+
+    filepath = os.path.join(upload_folder, filename)
+
+    img.save(
+        filepath,
+        "WEBP",
+        quality=70,
+        optimize=True
+    )
+
+    return f"uploads/{filename}"
 
 @app.route('/add-product', methods=['POST'])
 def add_product():
+
     name = request.form['name'].strip()
     category_id = request.form['category_id']
     subcategory_id = request.form['subcategory_id']
@@ -1186,10 +1214,20 @@ def add_product():
     if not category_id or not subcategory_id:
         return "Please select category and subcategory"
 
+    images = request.files.getlist('images')
+
+    valid_images = [
+        img for img in images
+        if img and img.filename != ''
+    ]
+
+    # Minimum 1 image, Maximum 5 images
+    if len(valid_images) < 1 or len(valid_images) > 5:
+        return "Upload minimum 1 and maximum 5 images"
+
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Insert product
     cursor.execute("""
         INSERT INTO products
         (name, category_id, subcategory_id, quantity, price, description, show_home)
@@ -1206,35 +1244,26 @@ def add_product():
 
     product_id = cursor.lastrowid
 
-    images = request.files.getlist('images')
+    for image in valid_images:
 
-    if not os.path.exists(app.config['UPLOAD_FOLDER']):
-        os.makedirs(app.config['UPLOAD_FOLDER'])
+        filepath = save_optimized_image(
+            image,
+            app.config['UPLOAD_FOLDER']
+        )
 
-    for image in images:
-        if image and image.filename != '':
-            filename = secure_filename(image.filename)
-
-            image.save(
-                os.path.join(
-                    app.config['UPLOAD_FOLDER'],
-                    filename
-                )
-            )
-
-            filepath = f"uploads/{filename}"
-
-            cursor.execute("""
-                INSERT INTO product_images
-                (product_id, image)
-                VALUES (%s,%s)
-            """, (product_id, filepath))
+        cursor.execute("""
+            INSERT INTO product_images
+            (product_id, image)
+            VALUES (%s,%s)
+        """, (
+            product_id,
+            filepath
+        ))
 
     conn.commit()
     conn.close()
 
     return redirect('/manage-products')
-
 
 
 # ================= MANAGE PRODUCTS =================
@@ -1283,6 +1312,8 @@ def manage_products():
         'manage_products.html',
         products=products
     )
+
+
 
 # ================= DELETE PRODUCT =================
 @app.route('/delete-product/<int:id>')
