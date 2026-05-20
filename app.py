@@ -1277,17 +1277,23 @@ def manage_products():
     cursor = conn.cursor(dictionary=True)
 
     cursor.execute("""
-        SELECT 
+        SELECT
             p.*,
             c.name AS category,
             s.name AS subcategory,
-            GROUP_CONCAT(pi.image) AS images
+            GROUP_CONCAT(
+                pi.image
+                ORDER BY pi.id ASC
+            ) AS images
         FROM products p
-        LEFT JOIN categories c 
+
+        LEFT JOIN categories c
             ON p.category_id = c.id
-        LEFT JOIN subcategories s 
+
+        LEFT JOIN subcategories s
             ON p.subcategory_id = s.id
-        LEFT JOIN product_images pi 
+
+        LEFT JOIN product_images pi
             ON p.id = pi.product_id
 
         GROUP BY p.id
@@ -1303,19 +1309,20 @@ def manage_products():
     products = cursor.fetchall()
 
     for product in products:
+
         product['images'] = (
             product['images'].split(',')
             if product['images']
             else []
         )
 
+    cursor.close()
     conn.close()
 
     return render_template(
         'manage_products.html',
         products=products
     )
-
 
 
 # ================= DELETE PRODUCT =================
@@ -1325,7 +1332,7 @@ def delete_product(id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    # 1. Get all images of product
+    # ================= GET PRODUCT IMAGES =================
     cursor.execute("""
         SELECT image
         FROM product_images
@@ -1334,27 +1341,29 @@ def delete_product(id):
 
     images = cursor.fetchall()
 
-    # 2. Delete images from disk safely
+    # ================= DELETE IMAGES FROM DISK =================
     for img in images:
+
         if img['image']:
+
             file_path = os.path.join(
                 app.config['UPLOAD_FOLDER'],
-                os.path.basename(img['image'])  # only filename
+                os.path.basename(img['image'])
             )
 
             if os.path.exists(file_path):
                 try:
                     os.remove(file_path)
                 except Exception as e:
-                    print("File delete error:", file_path, e)
+                    print("Delete error:", e)
 
-    # 3. Delete from product_images table
+    # ================= DELETE IMAGE PATHS FROM DB =================
     cursor.execute("""
         DELETE FROM product_images
         WHERE product_id=%s
     """, (id,))
 
-    # 4. Delete from products table
+    # ================= DELETE PRODUCT =================
     cursor.execute("""
         DELETE FROM products
         WHERE id=%s
@@ -1365,8 +1374,8 @@ def delete_product(id):
     cursor.close()
     conn.close()
 
-    return redirect('/admin/products')
-# ================= EDIT PRODUCT =================
+    return redirect('/manage-products')
+
 @app.route('/edit-product/<int:id>', methods=['GET', 'POST'])
 def edit_product(id):
 
@@ -1392,7 +1401,7 @@ def edit_product(id):
                 description=%s,
                 show_home=%s
             WHERE id=%s
-        """,(
+        """, (
             name,
             price,
             quantity,
@@ -1401,74 +1410,81 @@ def edit_product(id):
             id
         ))
 
-
-        # Delete selected images
+        # ================= DELETE SELECTED IMAGES =================
         delete_images = request.form.getlist('delete_images')
 
         for img in delete_images:
 
-            img_path = os.path.join('static', img)
+            file_path = os.path.join(
+                app.config['UPLOAD_FOLDER'],
+                os.path.basename(img)
+            )
 
-            if os.path.exists(img_path):
-                os.remove(img_path)
+            if os.path.exists(file_path):
+                os.remove(file_path)
 
             cursor.execute("""
                 DELETE FROM product_images
                 WHERE product_id=%s
                 AND image=%s
-            """,(id,img))
+            """, (id, img))
 
-
-        # Add new images
+        # ================= ADD NEW IMAGES =================
         images = request.files.getlist('images')
 
-        if not os.path.exists(app.config['UPLOAD_FOLDER']):
-            os.makedirs(app.config['UPLOAD_FOLDER'])
+        valid_images = [
+            img for img in images
+            if img and img.filename != ''
+        ]
 
-        for image in images:
+        if valid_images:
 
-            if image and image.filename != '':
+            current_count_query = """
+                SELECT COUNT(*) AS total
+                FROM product_images
+                WHERE product_id=%s
+            """
 
-                filename = secure_filename(image.filename)
+            cursor.execute(current_count_query, (id,))
+            current_count = cursor.fetchone()['total']
 
-                save_path = os.path.join(
-                    app.config['UPLOAD_FOLDER'],
-                    filename
+            if current_count + len(valid_images) > 5:
+                conn.close()
+                return "Maximum 5 images allowed"
+
+            for image in valid_images:
+
+                filepath = save_optimized_image(
+                    image,
+                    app.config['UPLOAD_FOLDER']
                 )
-
-                image.save(save_path)
-
-                filepath = f"uploads/{filename}"
 
                 cursor.execute("""
                     INSERT INTO product_images
-                    (product_id,image)
-                    VALUES(%s,%s)
-                """,(id,filepath))
-
+                    (product_id, image)
+                    VALUES (%s,%s)
+                """, (id, filepath))
 
         conn.commit()
         conn.close()
 
         return redirect('/manage-products')
 
-
-    # GET PRODUCT
+    # ================= GET PRODUCT =================
     cursor.execute("""
         SELECT *
         FROM products
         WHERE id=%s
-    """,(id,))
+    """, (id,))
 
     product = cursor.fetchone()
 
-
-    # GET PRODUCT IMAGES
+    # ================= GET IMAGES =================
     cursor.execute("""
         SELECT image
         FROM product_images
         WHERE product_id=%s
-    """,(id,))
+    """, (id,))
 
     product['images'] = cursor.fetchall()
 
@@ -1478,7 +1494,6 @@ def edit_product(id):
         'edit_product.html',
         product=product
     )
-
 
 
 
