@@ -31,7 +31,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-app.config['MAX_CONTENT_LENGTH'] = 15 * 1024 * 1024
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
 
 
 
@@ -1175,6 +1175,9 @@ def adding_product_page():
     )
 
 
+@app.errorhandler(413)
+def too_large(e):
+    return "Upload too large. Please upload smaller images.", 413
 
 # ================= IMAGE OPTIMIZER =================
 def save_optimized_image(file, upload_folder):
