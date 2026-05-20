@@ -396,12 +396,8 @@ GROUP BY cart.id
 @app.route('/add-to-cart/<int:id>/<int:qty>')
 def add_to_cart(id, qty):
 
-    # LOGIN CHECK
     if 'user' not in session:
-
-        # SAVE CURRENT URL
         session['next_url'] = request.url
-
         return redirect('/login-page')
 
     username = session['user']
@@ -411,45 +407,50 @@ def add_to_cart(id, qty):
 
     # GET PRODUCT
     cursor.execute("""
-        SELECT category_id, subcategory_id
+        SELECT category_id, subcategory_id, quantity
         FROM products
         WHERE id=%s
     """, (id,))
 
     product = cursor.fetchone()
 
-    # PRODUCT NOT FOUND
     if not product:
-
         conn.close()
-
         return redirect('/')
 
-    # CHECK PRODUCT ALREADY IN CART
+    stock = product['quantity']
+
+    # CHECK EXISTING CART
     cursor.execute("""
-        SELECT * FROM cart
+        SELECT quantity
+        FROM cart
         WHERE username=%s AND product_id=%s
-    """, (
-        username,
-        id
-    ))
+    """, (username, id))
 
     existing = cursor.fetchone()
 
-    # UPDATE QUANTITY
+    current_cart_qty = existing['quantity'] if existing else 0
+
+    new_qty = current_cart_qty + qty
+
+    # STOCK LIMIT CHECK
+    if new_qty > stock:
+        conn.close()
+        return f"Only {stock} items available in stock"
+
+    # UPDATE CART
     if existing:
 
         cursor.execute("""
             UPDATE cart
-            SET quantity = quantity + %s
+            SET quantity=%s
             WHERE username=%s AND product_id=%s
         """, (
-            qty,
+            new_qty,
             username,
             id
         ))
 
-    # INSERT NEW PRODUCT
     else:
 
         cursor.execute("""
@@ -477,24 +478,47 @@ def add_to_cart(id, qty):
 
   
 
-
 @app.route('/increase-cart/<int:id>')
 def increase_cart(id):
 
-    conn=get_db_connection()
-    cursor=conn.cursor()
+    if 'user' not in session:
+        return redirect('/login-page')
+
+    username = session['user']
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
 
     cursor.execute("""
-    UPDATE cart
-    SET quantity=quantity+1
-    WHERE product_id=%s
-    AND username=%s
-    """,(id,session['user']))
+        SELECT quantity
+        FROM products
+        WHERE id=%s
+    """, (id,))
+    product = cursor.fetchone()
+
+    cursor.execute("""
+        SELECT quantity
+        FROM cart
+        WHERE username=%s AND product_id=%s
+    """, (username, id))
+
+    cart = cursor.fetchone()
+
+    if cart and cart['quantity'] >= product['quantity']:
+        conn.close()
+        return f"Only {product['quantity']} items available"
+
+    cursor.execute("""
+        UPDATE cart
+        SET quantity = quantity + 1
+        WHERE username=%s AND product_id=%s
+    """, (username, id))
 
     conn.commit()
     conn.close()
 
     return redirect('/cart')
+
 
 
 @app.route('/decrease-cart/<int:id>')
