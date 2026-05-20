@@ -12,6 +12,7 @@ from cashfree_pg.models.create_order_request import CreateOrderRequest
 from cashfree_pg.models.customer_details import CustomerDetails
 from cashfree_pg.models.order_meta import OrderMeta
 import uuid
+from flask import flash
 
 
 app = Flask(__name__)
@@ -436,8 +437,9 @@ def add_to_cart(id, qty):
     # STOCK LIMIT CHECK
     if new_qty > stock:
         conn.close()
-        return f"Only {stock} items available in stock"
-
+        flash(f"Only {stock} items available in stock", "error")
+        return redirect('/cart')
+    
     # UPDATE CART
     if existing:
 
@@ -506,7 +508,11 @@ def increase_cart(id):
 
     if cart and cart['quantity'] >= product['quantity']:
         conn.close()
-        return f"Only {product['quantity']} items available"
+        flash(
+        f"Only {product['quantity']} items available in stock",
+        "error"
+        )
+        return redirect('/cart')
 
     cursor.execute("""
         UPDATE cart
