@@ -63,9 +63,29 @@ def get_db_connection():
 # ================= HOME =================
 
 
+from datetime import datetime
+
+def publish_products():
+
+    conn=get_db_connection()
+    cursor=conn.cursor()
+
+    cursor.execute("""
+        UPDATE products
+        SET is_private=0
+        WHERE is_private=1
+        AND publish_at<=NOW()
+    """)
+
+    conn.commit()
+    conn.close()
+
+
 
 @app.route('/')
 def home():
+
+    publish_products()   # IMPORTANT
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -78,26 +98,35 @@ def home():
     carousel_items = cursor.fetchall()
 
     cursor.execute("""
-        SELECT
-            p.id,
-            p.name,
-            p.price,
-            p.quantity,
-            c.name AS category,
-            s.name AS subcategory,
-            GROUP_CONCAT(pi.image) AS images
-        FROM products p
-        LEFT JOIN categories c
-            ON p.category_id=c.id
-        LEFT JOIN subcategories s
-            ON p.subcategory_id=s.id
-        LEFT JOIN product_images pi
-            ON p.id=pi.product_id
-        WHERE p.show_home=1
-        AND p.quantity>0
-        GROUP BY p.id
-        ORDER BY p.id DESC
-    """)
+    SELECT
+        p.id,
+        p.name,
+        p.price,
+        p.quantity,
+        c.name AS category,
+        s.name AS subcategory,
+        GROUP_CONCAT(DISTINCT pi.image) AS images
+    FROM products p
+    LEFT JOIN categories c
+        ON p.category_id = c.id
+    LEFT JOIN subcategories s
+        ON p.subcategory_id = s.id
+    LEFT JOIN product_images pi
+        ON p.id = pi.product_id
+    WHERE p.show_home = 1
+    AND p.is_private = 0
+    AND (
+        p.quantity > 0
+        OR EXISTS (
+            SELECT 1
+            FROM product_sizes ps
+            WHERE ps.product_id = p.id
+            AND ps.quantity > 0
+        )
+    )
+    GROUP BY p.id
+    ORDER BY p.id DESC
+""")
 
     products = cursor.fetchall()
 
@@ -133,7 +162,6 @@ def home():
         cart_count=cart_count
     )
 
-
 # ================= LOGIN =================
 @app.route('/login', methods=['POST'])
 def login():
@@ -147,7 +175,8 @@ def login():
     cursor.execute("""
         SELECT *
         FROM users
-        WHERE username=%s AND password=%s
+        WHERE username=%s
+        AND password=%s
     """, (
         username,
         password
@@ -163,12 +192,23 @@ def login():
 
         session['user'] = user['username']
 
-        # RETURN TO PREVIOUS PAGE
-        next_url = session.pop('next_url', None)
+        # CHECK NEXT PAGE
+        next_url = session.get('next_url')
 
+        # IF USER CAME FROM CART
+        if next_url:
+
+            session.pop('next_url', None)
+
+            return jsonify({
+                "status": "success",
+                "redirect": next_url
+            })
+
+        # DEFAULT HOME PAGE
         return jsonify({
             "status": "success",
-            "redirect": next_url if next_url else "/"
+            "redirect": "/"
         })
 
     # LOGIN FAILED
@@ -177,7 +217,6 @@ def login():
         return jsonify({
             "status": "fail"
         })
-  
 
 
 @app.route('/login-page')
@@ -268,14 +307,15 @@ def logout():
     return redirect('/')
 
 
-
-
 @app.route('/product/<int:id>')
 def product_details(id):
+
+    publish_products()
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
+    # PRODUCT
     cursor.execute("""
         SELECT
             p.*,
@@ -287,15 +327,18 @@ def product_details(id):
         LEFT JOIN subcategories s
             ON p.subcategory_id = s.id
         WHERE p.id=%s
+        AND p.is_private=0
     """, (id,))
 
     product = cursor.fetchone()
 
+    # PRODUCT NOT FOUND
     if not product:
         cursor.close()
         conn.close()
         return "Product not found"
 
+    # IMAGES
     cursor.execute("""
         SELECT image
         FROM product_images
@@ -306,20 +349,40 @@ def product_details(id):
     product['images'] = [
         img['image']
         for img in cursor.fetchall()
-        if img['image']
     ]
 
+    # SIZES
+    cursor.execute("""
+        SELECT size,price,quantity
+        FROM product_sizes
+        WHERE product_id=%s
+        ORDER BY id ASC
+    """, (id,))
+
+    product['sizes'] = cursor.fetchall()
+
+    # RELATED PRODUCTS
     cursor.execute("""
         SELECT
             p.id,
             p.name,
             p.price,
-            GROUP_CONCAT(pi.image) AS images
+            GROUP_CONCAT(DISTINCT pi.image) AS images
         FROM products p
         LEFT JOIN product_images pi
             ON p.id = pi.product_id
         WHERE p.category_id=%s
         AND p.id!=%s
+        AND p.is_private=0
+        AND (
+            p.quantity > 0
+            OR EXISTS (
+                SELECT 1
+                FROM product_sizes ps
+                WHERE ps.product_id = p.id
+                AND ps.quantity > 0
+            )
+        )
         GROUP BY p.id
         ORDER BY p.id DESC
     """, (product['category_id'], id))
@@ -327,6 +390,7 @@ def product_details(id):
     related_products = cursor.fetchall()
 
     for item in related_products:
+
         item['images'] = (
             item['images'].split(',')
             if item['images']
@@ -343,49 +407,160 @@ def product_details(id):
     )
 
 
+@app.route("/search-products")
+def search_products():
+
+    keyword = request.args.get("q")
+
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+
+    # SAVE SEARCH
+    cursor.execute("""
+        INSERT INTO search_reports(keyword)
+        VALUES(%s)
+    """,(keyword,))
+
+    db.commit()
+
+    # SEARCH PRODUCTS
+    cursor.execute("""
+        SELECT * FROM products
+        WHERE category LIKE %s
+        OR subcategory LIKE %s
+        OR name LIKE %s
+    """,(
+        f"%{keyword}%",
+        f"%{keyword}%",
+        f"%{keyword}%"
+    ))
+
+    products = cursor.fetchall()
+
+    return jsonify(products)
+
+@app.route('/material/<material_name>')
+def material_products(material_name):
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT
+            p.id,
+            p.name,
+            p.price,
+            p.quantity,
+            c.name AS category,
+            s.name AS subcategory,
+            GROUP_CONCAT(DISTINCT pi.image) AS images
+        FROM products p
+
+        LEFT JOIN categories c
+            ON p.category_id = c.id
+
+        LEFT JOIN subcategories s
+            ON p.subcategory_id = s.id
+
+        LEFT JOIN product_images pi
+            ON p.id = pi.product_id
+
+        WHERE (
+            c.name=%s
+            OR s.name=%s
+        )
+
+        AND p.is_private=0
+
+        AND (
+            p.quantity > 0
+            OR EXISTS (
+                SELECT 1
+                FROM product_sizes ps
+                WHERE ps.product_id = p.id
+                AND ps.quantity > 0
+            )
+        )
+
+        GROUP BY p.id
+        ORDER BY p.id DESC
+    """, (material_name, material_name))
+
+    products = cursor.fetchall()
+
+    for product in products:
+
+        product['images'] = (
+            product['images'].split(',')
+            if product['images']
+            else []
+        )
+
+    cursor.close()
+    conn.close()
+
+    return render_template(
+        'material_products.html',
+        products=products,
+        material_name=material_name
+    )
 
 
-
+# ================= CART PAGE =================
 @app.route('/cart')
 def cart():
 
+    # USER NOT LOGIN
     if 'user' not in session:
-        return redirect('/')
 
-    username=session['user']
+        # SAVE RETURN URL
+        session['next_url'] = '/cart'
 
-    conn=get_db_connection()
-    cursor=conn.cursor(dictionary=True)
+        return redirect('/login-page')
+
+    username = session['user']
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
 
     cursor.execute("""
-SELECT
-    cart.quantity as cart_qty,
-    p.*,
-    c.name as category,
-    s.name as subcategory,
-    GROUP_CONCAT(pi.image) as images
-FROM cart
-JOIN products p
-    ON cart.product_id=p.id
-LEFT JOIN categories c
-    ON p.category_id=c.id
-LEFT JOIN subcategories s
-    ON p.subcategory_id=s.id
-LEFT JOIN product_images pi
-    ON p.id=pi.product_id
-WHERE cart.username=%s
-GROUP BY cart.id
-""",(username,))
+        SELECT
+            cart.quantity AS cart_qty,
+            p.*,
+            c.name AS category,
+            s.name AS subcategory,
+            GROUP_CONCAT(pi.image) AS images
 
+        FROM cart
 
-    products=cursor.fetchall()
+        JOIN products p
+            ON cart.product_id = p.id
+
+        LEFT JOIN categories c
+            ON p.category_id = c.id
+
+        LEFT JOIN subcategories s
+            ON p.subcategory_id = s.id
+
+        LEFT JOIN product_images pi
+            ON p.id = pi.product_id
+
+        WHERE cart.username=%s
+
+        GROUP BY cart.id
+    """, (username,))
+
+    products = cursor.fetchall()
 
     for p in products:
-        p['images']=(
+
+        p['images'] = (
             p['images'].split(',')
-            if p['images'] else []
+            if p['images']
+            else []
         )
 
+    cursor.close()
     conn.close()
 
     return render_template(
@@ -393,12 +568,18 @@ GROUP BY cart.id
         products=products
     )
 
+
 # ================= ADD TO CART =================
+
 @app.route('/add-to-cart/<int:id>/<int:qty>')
 def add_to_cart(id, qty):
 
+    # USER NOT LOGIN
     if 'user' not in session:
+
+        # SAVE CURRENT URL
         session['next_url'] = request.url
+
         return redirect('/login-page')
 
     username = session['user']
@@ -408,15 +589,22 @@ def add_to_cart(id, qty):
 
     # GET PRODUCT
     cursor.execute("""
-        SELECT category_id, subcategory_id, quantity
+        SELECT
+            category_id,
+            subcategory_id,
+            quantity
         FROM products
         WHERE id=%s
     """, (id,))
 
     product = cursor.fetchone()
 
+    # PRODUCT NOT FOUND
     if not product:
+
+        cursor.close()
         conn.close()
+
         return redirect('/')
 
     stock = product['quantity']
@@ -425,34 +613,51 @@ def add_to_cart(id, qty):
     cursor.execute("""
         SELECT quantity
         FROM cart
-        WHERE username=%s AND product_id=%s
-    """, (username, id))
+        WHERE username=%s
+        AND product_id=%s
+    """, (
+        username,
+        id
+    ))
 
     existing = cursor.fetchone()
 
-    current_cart_qty = existing['quantity'] if existing else 0
+    current_cart_qty = (
+        existing['quantity']
+        if existing
+        else 0
+    )
 
     new_qty = current_cart_qty + qty
 
     # STOCK LIMIT CHECK
     if new_qty > stock:
+
+        cursor.close()
         conn.close()
-        flash(f"Only {stock} items available in stock", "error")
+
+        flash(
+            f"Only {stock} items available in stock",
+            "error"
+        )
+
         return redirect('/cart')
-    
-    # UPDATE CART
+
+    # UPDATE EXISTING
     if existing:
 
         cursor.execute("""
             UPDATE cart
             SET quantity=%s
-            WHERE username=%s AND product_id=%s
+            WHERE username=%s
+            AND product_id=%s
         """, (
             new_qty,
             username,
             id
         ))
 
+    # INSERT NEW
     else:
 
         cursor.execute("""
@@ -473,10 +678,11 @@ def add_to_cart(id, qty):
         ))
 
     conn.commit()
+
+    cursor.close()
     conn.close()
 
     return redirect('/cart')
-
 
   
 
@@ -1232,66 +1438,102 @@ def save_optimized_image(file, upload_folder):
 
     return f"uploads/{filename}"
 
+
 @app.route('/add-product', methods=['POST'])
 def add_product():
-
-    name = request.form['name'].strip()
-    category_id = request.form['category_id']
-    subcategory_id = request.form['subcategory_id']
-    quantity = request.form['quantity']
-    price = request.form['price']
-    description = request.form['description']
-
-    show_home = 1 if 'show_home' in request.form else 0
-
-    if not category_id or not subcategory_id:
-        return "Please select category and subcategory"
-
-    images = request.files.getlist('images')
-
-    valid_images = [
-        img for img in images
-        if img and img.filename != ''
-    ]
-
-    # Minimum 1 image, Maximum 5 images
-    if len(valid_images) < 1 or len(valid_images) > 5:
-        return "Upload minimum 1 and maximum 5 images"
 
     conn = get_db_connection()
     cursor = conn.cursor()
 
+    name = request.form['name']
+    category_id = request.form['category_id']
+    subcategory_id = request.form['subcategory_id']
+    description = request.form['description']
+
+    show_home = 1 if 'show_home' in request.form else 0
+    is_private = 1 if 'is_private' in request.form else 0
+    publish_at = request.form.get('publish_at') or None
+
+    price = request.form.get('price') or 0
+    quantity = request.form.get('quantity') or 0
+
     cursor.execute("""
         INSERT INTO products
-        (name, category_id, subcategory_id, quantity, price, description, show_home)
-        VALUES (%s,%s,%s,%s,%s,%s,%s)
-    """, (
+        (
+            name,
+            category_id,
+            subcategory_id,
+            description,
+            price,
+            quantity,
+            show_home,
+            is_private,
+            publish_at
+        )
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+    """,(
         name,
         category_id,
         subcategory_id,
-        quantity,
-        price,
         description,
-        show_home
+        price,
+        quantity,
+        show_home,
+        is_private,
+        publish_at
     ))
 
     product_id = cursor.lastrowid
 
-    for image in valid_images:
+    # Save Sizes
+    sizes = request.form.getlist('sizes[]')
 
-        filepath = save_optimized_image(
-            image,
-            app.config['UPLOAD_FOLDER']
-        )
+    for size in sizes:
 
-        cursor.execute("""
-            INSERT INTO product_images
-            (product_id, image)
-            VALUES (%s,%s)
-        """, (
-            product_id,
-            filepath
-        ))
+        price_size = request.form.get(f'price_{size}')
+        qty_size = request.form.get(f'qty_{size}')
+
+        if price_size and qty_size:
+
+            cursor.execute("""
+                INSERT INTO product_sizes
+                (
+                    product_id,
+                    size,
+                    price,
+                    quantity
+                )
+                VALUES (%s,%s,%s,%s)
+            """,(
+                product_id,
+                size,
+                price_size,
+                qty_size
+            ))
+
+    # Save Images
+    images = request.files.getlist('images')
+
+    for image in images:
+
+        if image.filename:
+
+            filepath = save_optimized_image(
+                image,
+                app.config['UPLOAD_FOLDER']
+            )
+
+            cursor.execute("""
+                INSERT INTO product_images
+                (
+                    product_id,
+                    image
+                )
+                VALUES (%s,%s)
+            """,(
+                product_id,
+                filepath
+            ))
 
     conn.commit()
     conn.close()
@@ -1312,22 +1554,17 @@ def manage_products():
             c.name AS category,
             s.name AS subcategory,
             GROUP_CONCAT(
-                pi.image
+                DISTINCT pi.image
                 ORDER BY pi.id ASC
             ) AS images
         FROM products p
-
         LEFT JOIN categories c
             ON p.category_id = c.id
-
         LEFT JOIN subcategories s
             ON p.subcategory_id = s.id
-
         LEFT JOIN product_images pi
             ON p.id = pi.product_id
-
         GROUP BY p.id
-
         ORDER BY
             CASE
                 WHEN p.quantity = 0 THEN 0
@@ -1346,6 +1583,16 @@ def manage_products():
             else []
         )
 
+        # fetch sizes
+        cursor.execute("""
+            SELECT size,price,quantity
+            FROM product_sizes
+            WHERE product_id=%s
+            ORDER BY id ASC
+        """,(product['id'],))
+
+        product['sizes']=cursor.fetchall()
+
     cursor.close()
     conn.close()
 
@@ -1353,6 +1600,7 @@ def manage_products():
         'manage_products.html',
         products=products
     )
+
 
 
 # ================= DELETE PRODUCT =================
@@ -1406,6 +1654,8 @@ def delete_product(id):
 
     return redirect('/manage-products')
 
+
+
 @app.route('/edit-product/<int:id>', methods=['GET', 'POST'])
 def edit_product(id):
 
@@ -1415,17 +1665,21 @@ def edit_product(id):
     if request.method == 'POST':
 
         name = request.form['name'].strip()
-        price = float(request.form['price'])
-        quantity = int(request.form['quantity'])
+        category_id = request.form['category_id']
+        subcategory_id = request.form['subcategory_id']
         description = request.form['description'].strip()
 
         show_home = 1 if 'show_home' in request.form else 0
 
-        # Update product
+        price = request.form.get('price') or 0
+        quantity = request.form.get('quantity') or 0
+
         cursor.execute("""
             UPDATE products
             SET
                 name=%s,
+                category_id=%s,
+                subcategory_id=%s,
                 price=%s,
                 quantity=%s,
                 description=%s,
@@ -1433,6 +1687,8 @@ def edit_product(id):
             WHERE id=%s
         """, (
             name,
+            category_id,
+            subcategory_id,
             price,
             quantity,
             description,
@@ -1440,12 +1696,36 @@ def edit_product(id):
             id
         ))
 
-        # ================= DELETE SELECTED IMAGES =================
-        delete_images = request.form.getlist('delete_images')
+        # delete old sizes
+        cursor.execute("""
+            DELETE FROM product_sizes
+            WHERE product_id=%s
+        """,(id,))
+
+        # save sizes
+        sizes=request.form.getlist('sizes[]')
+
+        for size in sizes:
+
+            price_size=request.form.get(f'price_{size}')
+            qty_size=request.form.get(f'qty_{size}')
+
+            if price_size and qty_size:
+
+                cursor.execute("""
+                    INSERT INTO product_sizes
+                    (product_id,size,price,quantity)
+                    VALUES(%s,%s,%s,%s)
+                """,(
+                    id,size,price_size,qty_size
+                ))
+
+        # delete images
+        delete_images=request.form.getlist('delete_images')
 
         for img in delete_images:
 
-            file_path = os.path.join(
+            file_path=os.path.join(
                 app.config['UPLOAD_FOLDER'],
                 os.path.basename(img)
             )
@@ -1457,74 +1737,75 @@ def edit_product(id):
                 DELETE FROM product_images
                 WHERE product_id=%s
                 AND image=%s
-            """, (id, img))
+            """,(id,img))
 
-        # ================= ADD NEW IMAGES =================
-        images = request.files.getlist('images')
+        # add images
+        images=request.files.getlist('images')
 
-        valid_images = [
-            img for img in images
-            if img and img.filename != ''
-        ]
+        for image in images:
 
-        if valid_images:
+            if image.filename:
 
-            current_count_query = """
-                SELECT COUNT(*) AS total
-                FROM product_images
-                WHERE product_id=%s
-            """
-
-            cursor.execute(current_count_query, (id,))
-            current_count = cursor.fetchone()['total']
-
-            if current_count + len(valid_images) > 5:
-                conn.close()
-                return "Maximum 5 images allowed"
-
-            for image in valid_images:
-
-                filepath = save_optimized_image(
+                filepath=save_optimized_image(
                     image,
                     app.config['UPLOAD_FOLDER']
                 )
 
                 cursor.execute("""
                     INSERT INTO product_images
-                    (product_id, image)
-                    VALUES (%s,%s)
-                """, (id, filepath))
+                    (product_id,image)
+                    VALUES(%s,%s)
+                """,(id,filepath))
 
         conn.commit()
         conn.close()
 
         return redirect('/manage-products')
 
-    # ================= GET PRODUCT =================
+    # product
     cursor.execute("""
         SELECT *
         FROM products
         WHERE id=%s
-    """, (id,))
+    """,(id,))
+    product=cursor.fetchone()
 
-    product = cursor.fetchone()
+    # categories
+    cursor.execute("SELECT * FROM categories")
+    categories=cursor.fetchall()
 
-    # ================= GET IMAGES =================
+    # subcategories
+    cursor.execute("""
+        SELECT *
+        FROM subcategories
+        WHERE category_id=%s
+    """,(product['category_id'],))
+    subcategories=cursor.fetchall()
+
+    # images
     cursor.execute("""
         SELECT image
         FROM product_images
         WHERE product_id=%s
-    """, (id,))
+    """,(id,))
+    product['images']=cursor.fetchall()
 
-    product['images'] = cursor.fetchall()
+    # sizes
+    cursor.execute("""
+        SELECT *
+        FROM product_sizes
+        WHERE product_id=%s
+    """,(id,))
+    product['sizes']=cursor.fetchall()
 
     conn.close()
 
     return render_template(
         'edit_product.html',
-        product=product
+        product=product,
+        categories=categories,
+        subcategories=subcategories
     )
-
 
 
 @app.route('/stockentry')
@@ -1852,9 +2133,6 @@ def admin_completed_orders():
         'admin_completed_orders.html',
         orders=orders
     )
-
-
-
 
 
 

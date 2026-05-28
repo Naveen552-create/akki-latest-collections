@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>{{ material_name }}</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:Arial,sans-serif;
+    background:#f4f7f2;
+    padding:25px;
+}
+
+/* TOP BAR */
+
+.top-bar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:30px;
+}
+
+/* BACK BUTTON */
+
+.back-btn{
+    text-decoration:none;
+    background:#1b5e20;
+    color:white;
+    padding:12px 22px;
+    border-radius:8px;
+    font-size:16px;
+    font-weight:bold;
+    transition:0.3s;
+    display:inline-block;
+}
+
+.back-btn:hover{
+    background:#2e7d32;
+}
+
+/* TITLE */
+
+.page-title{
+    text-align:center;
+    color:#1b5e20;
+    font-size:34px;
+    margin-bottom:30px;
+    font-weight:bold;
+}
+
+/* GRID */
+
+.product-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:25px;
+}
+
+/* CARD */
+
+.card{
+    background:white;
+    border-radius:14px;
+    overflow:hidden;
+    box-shadow:0 4px 12px rgba(0,0,0,0.08);
+    transition:0.3s;
+}
+
+.card:hover{
+    transform:translateY(-6px);
+}
+
+/* IMAGE */
+
+.card img{
+    width:100%;
+    height:320px;
+    object-fit:cover;
+    display:block;
+}
+
+/* NO IMAGE */
+
+.no-image{
+    width:100%;
+    height:320px;
+    background:#e8f5e9;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:20px;
+    color:#1b5e20;
+    font-size:20px;
+    font-weight:bold;
+    line-height:1.6;
+}
+
+/* CONTENT */
+
+.card-content{
+    padding:18px;
+}
+
+.card h3{
+    font-size:22px;
+    margin-bottom:10px;
+    color:#111;
+}
+
+.card p{
+    color:#555;
+    margin-bottom:18px;
+    font-size:15px;
+}
+
+/* BUTTON */
+
+.card button{
+    width:100%;
+    padding:13px;
+    border:none;
+    border-radius:8px;
+    background:#2e7d32;
+    color:white;
+    font-size:16px;
+    font-weight:bold;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.card button:hover{
+    background:#1b5e20;
+}
+
+/* RESPONSIVE */
+
+@media(max-width:1200px){
+
+    .product-grid{
+        grid-template-columns:repeat(3,1fr);
+    }
+
+}
+
+@media(max-width:768px){
+
+    .product-grid{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+}
+
+@media(max-width:500px){
+
+    .product-grid{
+        grid-template-columns:1fr;
+    }
+
+    .page-title{
+        font-size:26px;
+    }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- TOP -->
+
+<div class="top-bar">
+
+<a href="/" class="back-btn">
+    ← Back To Home
+</a>
+
+</div>
+
+<!-- TITLE -->
+
+<h2 class="page-title">
+    {{ material_name }} Collection
+</h2>
+
+<!-- PRODUCTS -->
+
+<div class="product-grid">
+
+{% for product in products %}
+
+<div class="card">
+
+    {% if product.images %}
+
+    <img
+    src="{{ url_for('static', filename=product.images[0]) }}"
+    alt="{{ product.name }}">
+
+    {% else %}
+
+    <div class="no-image">
+        🛍️ Product Images<br>
+        Coming Soon ✨
+    </div>
+
+    {% endif %}
+
+    <div class="card-content">
+
+        <h3>{{ product.name }}</h3>
+
+        <p>
+            {{ product.category }}
+        </p>
+
+        <a href="{{ url_for('product_details', id=product.id) }}">
+
+            <button>
+                View Product
+            </button>
+
+        </a>
+
+    </div>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+</body>
+</html>

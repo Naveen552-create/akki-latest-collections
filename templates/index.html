@@ -95,38 +95,168 @@
             display: none;
         }
 
-        /* SEARCH POPUP */
-        .search-popup {
-            position: fixed;
-            top: -100%;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: 0.4s;
-            z-index: 3000;
-            /* ADD THIS */
-        }
+       /* SEARCH POPUP */
 
-        .search-popup.active {
-            top: 0;
-        }
+.search-popup{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.75);
+    display:none;
+    justify-content:center;
+    align-items:flex-start;
+    padding-top:80px;
+    z-index:5000;
+    overflow-y:auto;
+}
 
-        .search-box-popup {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            display: flex;
-            gap: 10px;
-        }
+.search-popup.active{
+    display:flex;
+}
 
-        .search-box-popup input {
-            padding: 10px;
-            border: 1px solid #ddd;
-        }
+/* CONTAINER */
+
+.search-container{
+    width:95%;
+    max-width:1200px;
+}
+
+/* SEARCH BOX */
+
+.search-box-popup{
+    width:100%;
+    background:white;
+    border-radius:16px;
+    padding:18px 20px;
+    display:flex;
+    align-items:center;
+    gap:15px;
+    box-shadow:0 10px 30px rgba(0,0,0,.2);
+}
+
+.search-box-popup input{
+    flex:1;
+    border:none;
+    outline:none;
+    font-size:18px;
+    background:none;
+}
+
+.search-box-popup i{
+    font-size:22px;
+    cursor:pointer;
+    color:#777;
+}
+
+/* RESULTS */
+
+.search-results{
+    margin-top:25px;
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:22px;
+}
+
+/* CARD */
+
+.search-card{
+    background:white;
+    border-radius:16px;
+    overflow:hidden;
+    box-shadow:0 4px 15px rgba(0,0,0,.12);
+    transition:.3s;
+    animation:fadeUp .3s ease;
+}
+
+.search-card:hover{
+    transform:translateY(-5px);
+}
+
+.search-card img{
+    width:100%;
+    height:280px;
+    object-fit:cover;
+    background:#fff;
+}
+
+.search-card-content{
+    padding:15px;
+}
+
+.search-card-content h3{
+    font-size:17px;
+    color:#222;
+    margin-bottom:6px;
+}
+
+.search-card-content p{
+    color:#1b8f4b;
+    font-weight:600;
+    margin-bottom:12px;
+}
+
+.search-card-content a{
+    display:inline-block;
+    background:#1b8f4b;
+    color:white;
+    text-decoration:none;
+    padding:10px 16px;
+    border-radius:8px;
+}
+
+/* NO RESULT */
+
+.no-result{
+    grid-column:1/-1;
+    background:white;
+    padding:40px;
+    border-radius:16px;
+    text-align:center;
+    font-size:22px;
+    color:#666;
+}
+
+/* ANIMATION */
+
+@keyframes fadeUp{
+    from{
+        opacity:0;
+        transform:translateY(15px);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+
+/* MOBILE */
+
+@media(max-width:900px){
+
+    .search-results{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+}
+
+@media(max-width:600px){
+
+    .search-popup{
+        padding-top:40px;
+    }
+
+    .search-results{
+        grid-template-columns:1fr;
+    }
+
+    .search-box-popup{
+        padding:14px;
+    }
+
+    .search-box-popup input{
+        font-size:16px;
+    }
+
+}
 
         /* ================= MOBILE ================= */
         @media(max-width:900px) {
@@ -941,13 +1071,38 @@
 
 <body>
 
-    <!-- SEARCH -->
-    <div class="search-popup" id="searchPopup">
+
+
+<!-- SEARCH POPUP -->
+
+<div class="search-popup" id="searchPopup"
+onclick="outsideClose(event)">
+
+    <div class="search-container">
+
+        <!-- SEARCH BOX -->
         <div class="search-box-popup">
-            <input type="text" placeholder="Search...">
-            <i class="fa fa-times" onclick="closeSearch()"></i>
+
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="Search Products..."
+                onkeyup="searchProducts()"
+                autocomplete="off">
+
+            <i class="fa fa-times"
+               onclick="closeSearch()"></i>
+
         </div>
+
+        <!-- SEARCH RESULTS -->
+        <div id="searchResults"
+             class="search-results">
+        </div>
+
     </div>
+
+</div>
 
 
 <!-- LOGIN POPUP -->
@@ -1032,83 +1187,186 @@
                 <i class="fa fa-times"></i>
             </div>
 
-            <a href="#">Home</a>
+           <a href="/">Home</a>
 
             <!-- Dress Material -->
             <div class="dropdown">
-                <span>Dress Material <i class="fa fa-chevron-down"></i></span>
-                <div class="dropdown-menu">
-                    <a href="#">Mangalagiri Pattu</a>
-                    <a href="#">Mangalagiri Cotton</a>
-                    <a href="#">Chandri Silk</a>
-                    <a href="#">Jam Damni</a>
-                    <a href="#">Kota Cloth</a>
-                    <a href="#">Kunchali Cloth</a>
-                    <a href="#">Model Print Cloth</a>
-                    <a href="#">Chennalumi Silk</a>
-                    <a href="#">South Silk</a>
-                    <a href="#">Tissue</a>
-                    <a href="#">Sico</a>
-                    <a href="#">Card Sets</a>
-                </div>
-            </div>
+    <span>Dress Material <i class="fa fa-chevron-down"></i></span>
+
+    <div class="dropdown-menu">
+
+        <a href="/material/Mangalagiri Pattu">Mangalagiri Pattu</a>
+
+        <a href="/material/Mangalagiri Cotton">Mangalagiri Cotton</a>
+
+        <a href="/material/Chandri Silk">Chandri Silk</a>
+
+        <a href="/material/Jam Damni">Jam Damni</a>
+
+        <a href="/material/Kota Cloth">Kota Cloth</a>
+
+        <a href="/material/Kunchali Cloth">Kunchali Cloth</a>
+
+        <a href="/material/Model Print Cloth">Model Print Cloth</a>
+
+        <a href="/material/Chennalumi Silk">Chennalumi Silk</a>
+
+        <a href="/material/South Silk">South Silk</a>
+
+        <a href="/material/Tissue">Tissue</a>
+
+        <a href="/material/Sico">Sico</a>
+
+        <a href="/material/Card Sets">Card Sets</a>
+
+    </div>
+</div>
 
             <!-- Sarees -->
-            <div class="dropdown">
-                <span>Sarees <i class="fa fa-chevron-down"></i></span>
-                <div class="dropdown-menu">
-                    <a href="#">Geo Sarees</a>
-                    <a href="#">Kalhi Sarees</a>
-                    <a href="#">Klot Cloth</a>
-                    <a href="#">Pure Cloth</a>
-                    <a href="#">Lenovo Dram</a>
-                    <a href="#">Varmu</a>
-                    <a href="#">Pochampally</a>
-                    <a href="#">Pamul</a>
-                </div>
-            </div>
+<div class="dropdown">
+
+    <span>
+        Sarees <i class="fa fa-chevron-down"></i>
+    </span>
+
+    <div class="dropdown-menu">
+
+        <a href="/material/Geo Sarees">
+            Geo Sarees
+        </a>
+
+        <a href="/material/Kalhi Sarees">
+            Kalhi Sarees
+        </a>
+
+        <a href="/material/Klot Cloth">
+            Klot Cloth
+        </a>
+
+        <a href="/material/Pure Cloth">
+            Pure Cloth
+        </a>
+
+        <a href="/material/Lenovo Dram">
+            Lenovo Dram
+        </a>
+
+        <a href="/material/Varmu">
+            Varmu
+        </a>
+
+        <a href="/material/Pochampally">
+            Pochampally
+        </a>
+
+        <a href="/material/Pamul">
+            Pamul
+        </a>
+
+    </div>
+
+</div>
 
             <!-- Readymade -->
-            <div class="dropdown">
-                <span>Readymade <i class="fa fa-chevron-down"></i></span>
-                <div class="dropdown-menu">
-                    <a href="#">Macharli</a>
-                    <a href="#">Chandra Wear</a>
-                    <a href="#">Pure Cloth</a>
-                </div>
-            </div>
+<div class="dropdown">
+
+    <span>
+        Readymade <i class="fa fa-chevron-down"></i>
+    </span>
+
+    <div class="dropdown-menu">
+
+        <a href="/material/Macharli">
+            Macharli
+        </a>
+
+        <a href="/material/Chandra Wear">
+            Chandra Wear
+        </a>
+
+        <a href="/material/Pure Cloth">
+            Pure Cloth
+        </a>
+
+    </div>
+
+</div>
 
             <!-- Frocks -->
-            <div class="dropdown">
-                <span>Frocks <i class="fa fa-chevron-down"></i></span>
-                <div class="dropdown-menu">
-                    <a href="#">Silk Frocks</a>
-                    <a href="#">Raw Cloth</a>
-                    <a href="#">Fancy Frocks</a>
-                </div>
-            </div>
+<div class="dropdown">
+
+    <span>
+        Frocks <i class="fa fa-chevron-down"></i>
+    </span>
+
+    <div class="dropdown-menu">
+
+        <a href="/material/Silk Frocks">
+            Silk Frocks
+        </a>
+
+        <a href="/material/Raw Cloth">
+            Raw Cloth
+        </a>
+
+        <a href="/material/Fancy Frocks">
+            Fancy Frocks
+        </a>
+
+    </div>
+
+</div>
 
             <!-- Bedsheets -->
-            <div class="dropdown">
-                <span>Bedsheets <i class="fa fa-chevron-down"></i></span>
-                <div class="dropdown-menu">
-                    <a href="#">Printed Bedsheets</a>
-                    <a href="#">Pure Cotton</a>
-                    <a href="#">Raw Cloth</a>
-                </div>
-            </div>
+<div class="dropdown">
+
+    <span>
+        Bedsheets <i class="fa fa-chevron-down"></i>
+    </span>
+
+    <div class="dropdown-menu">
+
+        <a href="/material/Printed Bedsheets">
+            Printed Bedsheets
+        </a>
+
+        <a href="/material/Pure Cotton">
+            Pure Cotton
+        </a>
+
+        <a href="/material/Raw Cloth">
+            Raw Cloth
+        </a>
+
+    </div>
+
+</div>
 
             <!-- Nightwear -->
-            <a href="#">Nightwear</a>
+            <a href="/material/Nightwear">
+    Nightwear
+</a>
 
             <!-- Dupattas -->
-            <div class="dropdown">
-                <span>Dupattas <i class="fa fa-chevron-down"></i></span>
-                <div class="dropdown-menu">
-                    <a href="#">Mach Darchur</a>
-                    <a href="#">Silk Dupattas</a>
-                </div>
-            </div>
+          <div class="dropdown">
+
+    <span>
+        Dupattas <i class="fa fa-chevron-down"></i>
+    </span>
+
+    <div class="dropdown-menu">
+
+        <a href="/material/Mach Darchur">
+            Mach Darchur
+        </a>
+
+        <a href="/material/Silk Dupattas">
+            Silk Dupattas
+        </a>
+
+    </div>
+
+</div>
 
         </div>
 
@@ -1254,12 +1512,27 @@
         <div class="footer-col">
             <h4>Quick Links</h4>
 
-            <a href="#">Home</a>
-            <a href="#">Dress Material</a>
-            <a href="#">Sarees</a>
-            <a href="#">Readymade</a>
-            <a href="#">Frocks</a>
-            <a href="#">Bedsheets</a>
+<a href="/">Home</a>
+
+<a href="/material/Mangalagiri Pattu">
+    Dress Material
+</a>
+
+<a href="/material/Geo Sarees">
+    Sarees
+</a>
+
+<a href="/material/Macharli">
+    Readymade
+</a>
+
+<a href="/material/Silk Frocks">
+    Frocks
+</a>
+
+<a href="/material/Printed Bedsheets">
+    Bedsheets
+</a>
         </div>
 
         <!-- COLUMN 3 -->
@@ -1267,23 +1540,24 @@
             <h4>Address</h4>
 
             <p>Akki Latest Collections</p>
-            <p>C/O Palangi DTDC</p>
-            <p>E.G.DT, A.P - 534216</p>
-            <p>Andhra Pradesh</p>
+            <p>D/no : 1-206, venkatanarayana nagar</p>
+            <p>Palangi - 534216</p>
+            <p>E.G.DT, A.P</p>
+            <p>PH - 8247025557</p>
         </div>
 
         <!-- COLUMN 4 -->
         <div class="footer-col">
             <h4>Contact Us</h4>
 
-            <p><i class="fa fa-phone"></i> 8247025557</p>
-            <p><i class="fa fa-envelope"></i> support@akki.com</p>
+            <p><i class="fa fa-phone"></i> 9885924146</p>
+            <p><i class="fa fa-envelope"></i>nallamrevathi@gmail.com</p>
 
             <div class="social-icons">
                 <a href="#"><i class="fab fa-facebook-f"></i></a>
-                <a href="#"><i class="fab fa-instagram"></i></a>
-                <a href="#"><i class="fab fa-whatsapp"></i></a>
-                <a href="#"><i class="fab fa-youtube"></i></a>
+                <a href="https://www.instagram.com/akkilatestcollections?igsh=dzl2NGFnY256OGs0&utm_source=qr"><i class="fab fa-instagram"></i></a>
+                <a href="https://chat.whatsapp.com/Cw4iwFIZ5Zx8MZNehRW4F2"><i class="fab fa-whatsapp"></i></a>
+                <a href="https://youtube.com/@akkilatestcollections?si=ach4wSV0iDtJBrCq"><i class="fab fa-youtube"></i></a>
             </div>
         </div>
 
@@ -1327,14 +1601,122 @@
             }
         }
 
-        /* SEARCH */
-        function openSearch() {
-            document.getElementById("searchPopup").classList.add("active");
-        }
+          
+        /* OPEN SEARCH */
 
-        function closeSearch() {
-            document.getElementById("searchPopup").classList.remove("active");
-        }
+function openSearch(){
+
+    document.getElementById("searchPopup")
+    .classList.add("active");
+
+    document.getElementById("searchInput")
+    .focus();
+
+}
+
+/* CLOSE SEARCH */
+
+function closeSearch(){
+
+    document.getElementById("searchPopup")
+    .classList.remove("active");
+
+    // CLEAR INPUT
+    document.getElementById("searchInput").value="";
+
+    // CLEAR RESULTS
+    document.getElementById("searchResults").innerHTML="";
+
+}
+
+/* OUTSIDE CLICK CLOSE */
+
+function outsideClose(event){
+
+    if(event.target.id==="searchPopup"){
+        closeSearch();
+    }
+
+}
+
+/* ESC BUTTON CLOSE */
+
+document.addEventListener("keydown",function(e){
+
+    if(e.key==="Escape"){
+        closeSearch();
+    }
+
+});
+
+/* SEARCH PRODUCTS */
+
+async function searchProducts(){
+
+    let keyword=document
+    .getElementById("searchInput")
+    .value.trim();
+
+    if(keyword.length<1){
+
+        document.getElementById("searchResults")
+        .innerHTML="";
+
+        return;
+    }
+
+    let response=await fetch(
+        `/search-products?q=${encodeURIComponent(keyword)}`
+    );
+
+    let products=await response.json();
+
+    let html="";
+
+    if(products.length===0){
+
+        html=`
+        <div class="no-result">
+            😔 No Products Found
+        </div>
+        `;
+
+    }
+
+    products.forEach(p=>{
+
+        let image=p.images.length
+        ? `/static/${p.images[0]}`
+        : "/static/no-image.png";
+
+        html+=`
+
+        <div class="search-card">
+
+            <img src="${image}">
+
+            <div class="search-card-content">
+
+                <h3>${p.name}</h3>
+
+                <p>${p.category}</p>
+
+                <a href="/product/${p.id}">
+                    View Product
+                </a>
+
+            </div>
+
+        </div>
+
+        `;
+
+    });
+
+    document.getElementById("searchResults")
+    .innerHTML=html;
+
+}
 
         /* ================= CAROUSEL SLIDER ================= */
 

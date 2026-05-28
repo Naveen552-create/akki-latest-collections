@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Login</title>
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:Arial,sans-serif;
+    background:linear-gradient(135deg,#e8f5e9,#f5f7fa);
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+}
+
+/* LOGIN BOX */
+
+.login-box{
+    width:100%;
+    max-width:430px;
+    background:white;
+    padding:40px 35px;
+    border-radius:20px;
+    box-shadow:0 10px 30px rgba(0,0,0,.1);
+}
+
+/* USER ICON */
+
+.user-icon{
+    width:90px;
+    height:90px;
+    background:#1b8f4b;
+    color:white;
+    border-radius:50%;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    margin:0 auto 20px;
+    font-size:40px;
+    box-shadow:0 6px 18px rgba(27,143,75,.3);
+}
+
+/* TITLE */
+
+h2{
+    text-align:center;
+    color:#1b8f4b;
+    margin-bottom:30px;
+    font-size:32px;
+}
+
+/* INPUTS */
+
+.input-box{
+    position:relative;
+    margin-bottom:20px;
+}
+
+.input-box i{
+    position:absolute;
+    left:15px;
+    top:50%;
+    transform:translateY(-50%);
+    color:#777;
+}
+
+.input-box input{
+    width:100%;
+    padding:15px 15px 15px 45px;
+    border:1px solid #ddd;
+    border-radius:12px;
+    font-size:16px;
+    outline:none;
+    transition:.3s;
+}
+
+.input-box input:focus{
+    border-color:#1b8f4b;
+    box-shadow:0 0 0 3px rgba(27,143,75,.1);
+}
+
+/* BUTTON */
+
+button{
+    width:100%;
+    padding:15px;
+    border:none;
+    border-radius:12px;
+    background:linear-gradient(45deg,#1b8f4b,#28c76f);
+    color:white;
+    font-size:18px;
+    font-weight:bold;
+    cursor:pointer;
+    transition:.3s;
+    margin-top:10px;
+}
+
+button:hover{
+    transform:translateY(-2px);
+    box-shadow:0 8px 20px rgba(27,143,75,.25);
+}
+
+/* LINKS */
+
+.links{
+    display:flex;
+    justify-content:space-between;
+    margin-top:18px;
+    flex-wrap:wrap;
+    gap:10px;
+}
+
+.links a{
+    text-decoration:none;
+    color:#1b8f4b;
+    font-size:15px;
+    font-weight:bold;
+}
+
+.links a:hover{
+    color:#146d39;
+}
+
+/* BACK */
+
+.back{
+    display:block;
+    text-align:center;
+    margin-top:25px;
+    text-decoration:none;
+    color:#555;
+}
+
+/* POPUP */
+
+.popup{
+    position:fixed;
+    top:20px;
+    right:20px;
+    background:#ff4d4d;
+    color:white;
+    padding:15px 22px;
+    border-radius:10px;
+    font-weight:bold;
+    display:none;
+    z-index:9999;
+}
+
+/* MOBILE */
+
+@media(max-width:500px){
+
+    .login-box{
+        padding:30px 25px;
+    }
+
+    h2{
+        font-size:28px;
+    }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- POPUP -->
+
+<div class="popup" id="popup"></div>
+
+<div class="login-box">
+
+<!-- USER ICON -->
+
+<div class="user-icon">
+    👤
+</div>
+
+<!-- TITLE -->
+
+<h2>
+    User Login
+</h2>
+
+<!-- FORM -->
+
+<form id="loginForm">
+
+<!-- USERNAME -->
+
+<div class="input-box">
+
+    <i class="fa fa-user"></i>
+
+    <input
+    type="text"
+    name="username"
+    placeholder="Enter Username"
+    required>
+
+</div>
+
+<!-- PASSWORD -->
+
+<div class="input-box">
+
+    <i class="fa fa-lock"></i>
+
+    <input
+    type="password"
+    name="password"
+    placeholder="Enter Password"
+    required>
+
+</div>
+
+<!-- BUTTON -->
+
+<button type="submit" id="loginBtn">
+
+    Login
+
+</button>
+
+</form>
+
+<!-- LINKS -->
+
+
+
+<!-- BACK -->
+
+<a href="/" class="back">
+
+    ← Back To Home
+
+</a>
+
+</div>
+
+<script>
+
+/* POPUP */
+
+function showPopup(message){
+
+    let popup=document.getElementById("popup");
+
+    popup.innerHTML=message;
+
+    popup.style.display="block";
+
+    setTimeout(()=>{
+
+        popup.style.display="none";
+
+    },3000);
+
+}
+
+/* LOGIN */
+
+document.getElementById("loginForm")
+.addEventListener("submit",async function(e){
+
+    e.preventDefault();
+
+    let btn=document.getElementById("loginBtn");
+
+    btn.innerHTML="Please Wait...";
+    btn.disabled=true;
+
+    let formData=new FormData(this);
+
+    let response=await fetch("/login",{
+        method:"POST",
+        body:formData
+    });
+
+    let data=await response.json();
+
+    if(data.status==="success"){
+
+        showPopup("✅ Login Successful");
+
+        setTimeout(()=>{
+
+            window.location.href=data.redirect;
+
+        },1000);
+
+    }
+
+    else{
+
+        showPopup("❌ Invalid Username or Password");
+
+        btn.innerHTML="Login";
+        btn.disabled=false;
+
+    }
+
+});
+
+</script>
+
+</body>
+</html>

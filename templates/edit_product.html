@@ -2,88 +2,55 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Edit Product</title>
 
 <style>
-body{
-    font-family:Arial;
-    background:#f5f7fa;
-}
-
+body{font-family:Arial;background:#f5f7fa;}
 .container{
-    max-width:700px;
-    margin:40px auto;
-    background:white;
-    padding:25px;
-    border-radius:12px;
-    box-shadow:0 4px 12px rgba(0,0,0,0.1);
+max-width:800px;
+margin:40px auto;
+background:white;
+padding:25px;
+border-radius:12px;
+box-shadow:0 4px 12px rgba(0,0,0,.1);
 }
-
-input,textarea{
-    width:100%;
-    padding:12px;
-    margin:10px 0;
-    border:1px solid #ccc;
-    border-radius:8px;
-    box-sizing:border-box;
+input,textarea,select{
+width:100%;
+padding:12px;
+margin:10px 0;
+border:1px solid #ccc;
+border-radius:8px;
+box-sizing:border-box;
 }
-
-textarea{
-    height:100px;
-}
-
 button{
-    width:100%;
-    padding:14px;
-    background:black;
-    color:white;
-    border:none;
-    border-radius:8px;
-    cursor:pointer;
-    font-size:16px;
+width:100%;
+padding:14px;
+background:black;
+color:white;
+border:none;
+border-radius:8px;
+cursor:pointer;
 }
-
-button:hover{
-    opacity:.9;
-}
-
-.back{
-    text-decoration:none;
-    color:green;
-    font-weight:bold;
-}
-
-.image-box{
-    border:1px solid #ddd;
-    padding:10px;
-    border-radius:10px;
-    width:150px;
-    text-align:center;
-    box-shadow:0 2px 8px rgba(0,0,0,.08);
-}
-
-.image-box img{
-    width:100%;
-    height:130px;
-    object-fit:cover;
-    border-radius:8px;
-}
-
-.delete-btn{
-    background:red;
-    color:white;
-    padding:8px 14px;
-    border-radius:6px;
-    cursor:pointer;
-    display:inline-block;
-    margin-top:10px;
-}
-
 .image-wrap{
-    display:flex;
-    gap:20px;
-    flex-wrap:wrap;
+display:flex;
+gap:20px;
+flex-wrap:wrap;
+}
+.image-box{
+width:150px;
+border:1px solid #ddd;
+padding:10px;
+border-radius:10px;
+}
+.image-box img{
+width:100%;
+height:130px;
+object-fit:cover;
+}
+.size-box{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:12px;
 }
 </style>
 </head>
@@ -91,39 +58,87 @@ button:hover{
 
 <div class="container">
 
-<a href="/manage-products" class="back">← Back</a>
+<a href="/manage-products">← Back</a>
 
 <h2>Edit Product</h2>
 
 <form method="POST" enctype="multipart/form-data">
 
-<input type="text" name="name" value="{{ product.name }}" required>
+<input type="text" name="name" value="{{product.name}}" required>
 
-<input type="number" name="price" value="{{ product.price }}" required>
+<select name="category_id" required>
+{% for cat in categories %}
+<option value="{{cat.id}}"
+{% if cat.id==product.category_id %}selected{% endif %}>
+{{cat.name}}
+</option>
+{% endfor %}
+</select>
 
-<input type="number" name="quantity" value="{{ product.quantity }}" required>
+<select name="subcategory_id" required>
+{% for sub in subcategories %}
+<option value="{{sub.id}}"
+{% if sub.id==product.subcategory_id %}selected{% endif %}>
+{{sub.name}}
+</option>
+{% endfor %}
+</select>
 
-<textarea name="description">{{ product.description }}</textarea>
+{% if product.sizes %}
 
-<label style="
-display:flex;
-align-items:center;
-gap:10px;
-margin:15px 0;
-cursor:pointer;
-">
+<h3>Sizes</h3>
 
+<div class="size-box">
+
+{% for s in product.sizes %}
+
+<div>
+
+<b>{{s.size}}</b>
+
+<input type="hidden"
+name="sizes[]"
+value="{{s.size}}">
+
+<input type="number"
+name="price_{{s.size}}"
+value="{{s.price}}"
+placeholder="Price">
+
+<input type="number"
+name="qty_{{s.size}}"
+value="{{s.quantity}}"
+placeholder="Qty">
+
+</div>
+
+{% endfor %}
+
+</div>
+
+{% else %}
+
+<input type="number"
+name="price"
+value="{{product.price}}"
+placeholder="Price">
+
+<input type="number"
+name="quantity"
+value="{{product.quantity}}"
+placeholder="Qty">
+
+{% endif %}
+
+<textarea name="description">
+{{product.description}}
+</textarea>
+
+<label>
 <input type="checkbox"
 name="show_home"
-style="
-width:18px;
-height:18px;
-margin:0;
-"
-{% if product.show_home == 1 %} checked {% endif %}>
-
-<span>Show on Home Page</span>
-
+{% if product.show_home==1 %}checked{% endif %}>
+Show Home
 </label>
 
 <h3>Current Images</h3>
@@ -133,13 +148,12 @@ margin:0;
 {% for img in product.images %}
 <div class="image-box">
 
-<img src="{{ url_for('static', filename=img.image) }}">
+<img src="{{url_for('static',filename=img.image)}}">
 
-<label class="delete-btn">
+<label>
 <input type="checkbox"
 name="delete_images"
-value="{{ img.image }}"
-style="margin-right:8px;">
+value="{{img.image}}">
 Delete
 </label>
 
@@ -147,8 +161,6 @@ Delete
 {% endfor %}
 
 </div>
-
-<br>
 
 <h3>Add New Images</h3>
 

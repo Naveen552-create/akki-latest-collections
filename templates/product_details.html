@@ -664,6 +664,34 @@ height:220px;
 
 }
 
+.size-btn{
+padding:12px 18px;
+border:none;
+background:#eee;
+cursor:pointer;
+border-radius:10px;
+font-weight:bold;
+}
+
+.size-btn.active{
+background:#1b8f4b;
+color:white;
+}
+
+.size-btn{
+    padding:10px 18px;
+    border:none;
+    background:#eee;
+    cursor:pointer;
+    border-radius:6px;
+    font-weight:bold;
+}
+
+.active-size{
+    background:black;
+    color:white;
+}
+
 </style>
 
 </head>
@@ -745,6 +773,39 @@ onclick="changeImage(this.src)">
 See More
 </span>
 
+{% if product.sizes %}
+
+<div style="
+display:flex;
+gap:10px;
+flex-wrap:wrap;
+margin-top:20px;
+">
+
+{% for s in product.sizes %}
+<button
+class="size-btn"
+data-size="{{s.size}}"
+data-price="{{s.price}}"
+data-qty="{{s.quantity}}"
+onclick="selectSize(this)">
+{{s.size}}
+</button>
+{% endfor %}
+
+</div>
+
+<div class="price" id="priceBox">
+Select Size
+</div>
+
+<p class="stock" id="stockBox"></p>
+
+<input type="hidden"
+id="selectedSize">
+
+{% else %}
+
 <div class="price">
 ₹{{ product.price }}
 </div>
@@ -753,13 +814,17 @@ See More
 
 <b>Stock:</b>
 
-{% if product.quantity == 0 %}
-<span style="color:red;">Out Of Stock</span>
+{% if product.quantity==0 %}
+<span style="color:red;">
+Out Of Stock
+</span>
 {% else %}
-{{ product.quantity }}
+{{product.quantity}}
 {% endif %}
 
 </p>
+
+{% endif %}
 
 <button class="cart-btn"
 onclick="openCart()">
@@ -809,6 +874,9 @@ alt="No Image">
 </div>
 
 </div>
+
+
+
 <!-- CART POPUP -->
 
 <div class="cart-popup"
@@ -848,6 +916,7 @@ min="1"
 max="{{ product.quantity }}"
 value="1">
 
+
 <button onclick="confirmCart()">
 Add To Cart
 </button>
@@ -858,74 +927,167 @@ Add To Cart
 
 <script>
 
+const hasSizes =
+"{{ 'true' if product.sizes else 'false' }}" === "true";
+
+const productId = "{{ product.id }}";
+
 /* IMAGE CHANGE */
-
 function changeImage(src){
-
-document.getElementById("main").src=src;
-
+    document.getElementById("main").src = src;
 }
 
 /* AUTO SLIDER */
+window.onload = function(){
 
-window.onload=function(){
+    const slides =
+    document.querySelectorAll(".thumb");
 
-const slides=
-document.querySelectorAll(".thumb");
+    let current = 0;
 
-let current=0;
+    if(slides.length > 0){
 
-if(slides.length>0){
+        setInterval(function(){
 
-setInterval(function(){
+            current++;
 
-current++;
+            if(current >= slides.length){
+                current = 0;
+            }
 
-if(current>=slides.length){
-current=0;
-}
+            document.getElementById(
+                "main"
+            ).src = slides[current].src;
 
-document.getElementById("main").src=
-slides[current].src;
-
-},5000);
-
-}
-
+        },5000);
+    }
 };
 
-/* OPEN CART */
+/* SIZE SELECT */
+function selectSize(
+    e,
+    size,
+    price,
+    qty
+){
 
+    document.getElementById(
+        "selectedSize"
+    ).value = size;
+
+    document.getElementById(
+        "priceBox"
+    ).innerHTML = "₹" + price;
+
+    document.getElementById(
+        "stockBox"
+    ).innerHTML =
+        qty > 0
+        ? "<b>Stock:</b> " + qty
+        : "<span style='color:red;'>Out Of Stock</span>";
+
+    document.querySelectorAll(
+        ".size-btn"
+    ).forEach(btn=>{
+        btn.classList.remove(
+            "active"
+        );
+    });
+
+    e.target.classList.add(
+        "active"
+    );
+}
+
+/* OPEN CART */
 function openCart(){
 
-document.getElementById(
-'cartPopup'
-).classList.add('active');
+    if(
+        hasSizes &&
+        !document.getElementById(
+            "selectedSize"
+        ).value
+    ){
+        alert("Select Size");
+        return;
+    }
 
+    document.getElementById(
+        "cartPopup"
+    ).classList.add(
+        "active"
+    );
 }
 
 /* CLOSE CART */
-
 function closeCart(){
 
-document.getElementById(
-'cartPopup'
-).classList.remove('active');
-
+    document.getElementById(
+        "cartPopup"
+    ).classList.remove(
+        "active"
+    );
 }
 
-/* CONFIRM */
-
+/* CONFIRM CART */
 function confirmCart(){
 
-let qty=
-document.getElementById(
-'popupQty'
-).value;
+    let qty =
+    document.getElementById(
+        "popupQty"
+    ).value;
 
-window.location=
-"/add-to-cart/{{ product.id }}/"+qty;
+    let size = "";
 
+    if(hasSizes){
+        size =
+        document.getElementById(
+            "selectedSize"
+        ).value;
+    }
+
+    window.location =
+        "/add-to-cart/"
+        + productId
+        + "/"
+        + qty
+        + "?size="
+        + size;
+}
+
+
+function selectSize(btn){
+
+    // remove active class
+    document.querySelectorAll('.size-btn')
+    .forEach(b => b.classList.remove('active-size'));
+
+    // active button
+    btn.classList.add('active-size');
+
+    let size = btn.dataset.size;
+    let price = btn.dataset.price;
+    let qty = btn.dataset.qty;
+
+    // set hidden input
+    document.getElementById('selectedSize').value = size;
+
+    // show price
+    document.getElementById('priceBox').innerHTML =
+        "₹" + price;
+
+    // show stock
+    if(parseInt(qty) <= 0){
+
+        document.getElementById('stockBox').innerHTML =
+            "<span style='color:red;'>Out Of Stock</span>";
+
+    }else{
+
+        document.getElementById('stockBox').innerHTML =
+            "<b>Stock:</b> " + qty;
+
+    }
 }
 
 </script>

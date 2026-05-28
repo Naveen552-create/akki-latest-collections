@@ -174,17 +174,63 @@ class="slide {% if loop.first %}active{% endif %}">
 
 <p><b>Category:</b> {{ p.category }}</p>
 <p><b>Subcategory:</b> {{ p.subcategory }}</p>
+{% if p.sizes %}
+
+<p><b>Sizes:</b></p>
+
+<div style="
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:8px;
+margin-bottom:12px;
+">
+
+{% for s in p.sizes %}
+
+<div style="
+border:1px solid #ddd;
+padding:8px;
+border-radius:8px;
+font-size:13px;
+background:#fafafa;
+">
+
+<b>{{ s.size }}</b><br>
+
+Qty:
+{% if s.quantity==0 %}
+<span style="color:red;">0</span>
+{% else %}
+{{ s.quantity }}
+{% endif %}
+
+<br>
+
+₹{{ s.price }}
+
+</div>
+
+{% endfor %}
+
+</div>
+
+{% else %}
+
 <p><b>Price:</b> ₹{{ p.price }}</p>
 
 <p>
 <b>Qty:</b>
 
-{% if p.quantity == 0 %}
-<span class="stock-zero">OUT OF STOCK</span>
+{% if p.quantity==0 %}
+<span class="stock-zero">
+OUT OF STOCK
+</span>
 {% else %}
 {{ p.quantity }}
 {% endif %}
 </p>
+
+{% endif %}
 
 <br>
 

@@ -152,41 +152,118 @@
 
         <div class="form-box">
             <h3>Add Product</h3>
-            <form method="POST" action="/add-product" enctype="multipart/form-data">
+           <form method="POST" action="/add-product" enctype="multipart/form-data">
 
-                <input type="text" name="name" placeholder="Product Name" required>
+    <input type="text" name="name" placeholder="Product Name" required>
 
-                <select name="category_id" id="category" required onchange="loadSubCategories()">
-                    <option value="">Select Category</option>
-                    {% for cat in categories %}
-                    <option value="{{cat.id}}">{{cat.name}}</option>
-                    {% endfor %}
-                </select>
+    <select name="category_id" id="category" required onchange="loadSubCategories(); loadSizes();">
+        <option value="">Select Category</option>
+        {% for cat in categories %}
+        <option value="{{cat.id}}" data-name="{{cat.name}}">
+            {{cat.name}}
+        </option>
+        {% endfor %}
+    </select>
 
-                <select name="subcategory_id" id="subcategory" required disabled>
-                    <option value="">Select Sub Category</option>
-                </select>
+    <select name="subcategory_id" id="subcategory" required disabled>
+        <option value="">Select Sub Category</option>
+    </select>
 
-                <input type="number" name="quantity" placeholder="Quantity" required>
+    <textarea name="description" placeholder="Description"></textarea>
 
-                <input type="text" name="price" placeholder="Price" required>
+    <div id="normal-fields">
 
-                <textarea name="description" placeholder="Description"></textarea>
+    <input
+        type="number"
+        name="price"
+        placeholder="Price"
+    >
 
-                <!-- Show on Home -->
-                <label
-                    style="display:flex; align-items:center; gap:10px; background:#f1f5f9; padding:10px; border-radius:8px; cursor:pointer;">
-                    <input type="checkbox" name="show_home"
-                        style="width:18px; height:18px; accent-color:#4CAF50; cursor:pointer;">
-                    <span style="font-weight:500;">Show on Home Page</span>
-                </label><br>
+    <input
+        type="number"
+        name="quantity"
+        placeholder="Quantity"
+    >
 
-                <!-- Image Upload -->
-               
-                <input type="file" name="images" accept="image/*" multiple required> 
+</div>
 
-                <button type="submit">Add Product</button>
-            </form>
+
+
+    <!-- Sizes -->
+    <div id="sizes-box"></div>
+
+    <!-- Private -->
+<label style="
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:#f1f5f9;
+    padding:10px;
+    border-radius:8px;
+    cursor:pointer;
+    margin-bottom:12px;
+">
+    <input
+        type="checkbox"
+        id="privateCheck"
+        name="is_private"
+        onchange="togglePublish()"
+        style="
+            width:18px;
+            height:18px;
+            accent-color:#ff9800;
+            cursor:pointer;
+        "
+    >
+    <span style="font-weight:500;">
+        Private Product
+    </span>
+</label>
+
+<div id="publishBox" style="display:none; margin-bottom:12px;">
+    <input
+        type="datetime-local"
+        name="publish_at"
+        style="
+            width:100%;
+            padding:10px;
+            border:1px solid #ccc;
+            border-radius:8px;
+        "
+    >
+</div>
+
+    <!-- Home -->
+<label style="
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:#f1f5f9;
+    padding:10px;
+    border-radius:8px;
+    cursor:pointer;
+    margin-bottom:12px;
+">
+    <input
+        type="checkbox"
+        name="show_home"
+        style="
+            width:18px;
+            height:18px;
+            accent-color:#4CAF50;
+            cursor:pointer;
+        "
+    >
+    <span style="font-weight:500;">
+        Show on Home Page
+    </span>
+</label>
+
+    <input type="file" name="images" multiple required>
+
+    <button type="submit">Add Product</button>
+
+</form>
         </div>
 
 
@@ -281,6 +358,94 @@
                 });
         }
     </script>
+
+    <script>
+
+function togglePublish(){
+    let check=document.getElementById("privateCheck");
+    document.getElementById("publishBox").style.display =
+        check.checked ? "block" : "none";
+}
+
+
+
+
+function loadSizes(){
+
+    let category=document.getElementById("category");
+    let selected=category.options[
+        category.selectedIndex
+    ].text.trim();
+
+    let box=document.getElementById("sizes-box");
+
+    let normalFields=document.getElementById("normal-fields");
+
+    box.innerHTML="";
+
+    let sizes=[];
+
+    if(
+        selected==="ready to wear dresses" ||
+        selected==="ready made blouses"
+    ){
+        sizes=[
+            "S","M","L","XL",
+            "XXL","3XL","4XL",
+            "5XL","6XL"
+        ];
+    }
+
+    else if(selected==="BedSheets"){
+        sizes=["6x6","7x7","8x8",
+               "9x9","7X8","8x9"];
+    }
+
+    else{
+        normalFields.style.display="block";
+        return;
+    }
+
+    normalFields.style.display="none";
+
+    sizes.forEach(size=>{
+
+        box.innerHTML+=`
+            <div style="
+                margin-bottom:15px;
+                padding:10px;
+                border:1px solid #ddd;
+                border-radius:8px;
+            ">
+
+                <b>${size}</b><br><br>
+
+                <input
+                    type="hidden"
+                    name="sizes[]"
+                    value="${size}"
+                >
+
+                <input
+                    type="number"
+                    name="price_${size}"
+                    placeholder="Price"
+                    required
+                >
+
+                <input
+                    type="number"
+                    name="qty_${size}"
+                    placeholder="Quantity"
+                    required
+                >
+            </div>
+        `;
+    });
+}
+
+
+</script>
 
 </body>
 
