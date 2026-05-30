@@ -3,3 +3,4 @@ gunicorn
 mysql-connector-python
 cashfree-pg
 Pillow
+requests
