@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WhatsApp Broadcast</title>
+
+    <style>
+
+        body{
+            font-family:Arial;
+            background:#f5f5f5;
+            padding:30px;
+        }
+
+        .box{
+            max-width:800px;
+            margin:auto;
+            background:white;
+            padding:25px;
+            border-radius:10px;
+            box-shadow:0 0 10px rgba(0,0,0,.1);
+        }
+
+        h2{
+            margin-top:0;
+        }
+
+        .count{
+            background:#25D366;
+            color:white;
+            padding:12px;
+            border-radius:6px;
+            margin-bottom:20px;
+            font-weight:bold;
+            text-align:center;
+        }
+
+        textarea{
+            width:100%;
+            height:250px;
+            padding:10px;
+            font-size:16px;
+            border:1px solid #ddd;
+            border-radius:6px;
+            resize:none;
+        }
+
+        button{
+            background:#25D366;
+            color:white;
+            border:none;
+            padding:12px 25px;
+            border-radius:6px;
+            cursor:pointer;
+            font-size:16px;
+            margin-top:15px;
+        }
+
+        button:hover{
+            opacity:.9;
+        }
+
+    </style>
+
+</head>
+<body>
+
+<div class="box">
+
+    <h2>📢 WhatsApp Offer Broadcast</h2>
+
+    <div class="count">
+        Total Customers Available : {{ total_customers }}
+    </div>
+
+    <form action="/send-whatsapp-offer" method="POST">
+
+        <textarea
+            name="message"
+            placeholder="Type only the offer message here..."
+            required></textarea>
+
+        <br>
+
+        <button type="submit">
+            Send To All Customers
+        </button>
+
+    </form>
+
+</div>
+
+</body>
+</html>

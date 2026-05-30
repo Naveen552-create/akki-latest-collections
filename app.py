@@ -13,10 +13,15 @@ from cashfree_pg.models.customer_details import CustomerDetails
 from cashfree_pg.models.order_meta import OrderMeta
 import uuid
 from flask import flash
+import requests
 
 
 app = Flask(__name__)
 app.secret_key = "secret123"   
+
+
+
+
 
 
 @app.before_request
@@ -59,6 +64,52 @@ def get_db_connection():
         password="Akki@2026Secure#552",
         database="u372412767_akki"
     )
+
+
+
+API_URL = "https://wasenderapi.com/api/send-message" 
+API_KEY = "ead64fbba18e5edaf80f605b0d63a41e5231488d07159726523474275b617340"
+
+
+def send_whatsapp(number, message):
+
+    phone = str(number).strip()
+
+    # Add India country code
+    if not phone.startswith("91"):
+        phone = "91" + phone
+
+    headers = {
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "to": phone,
+        "text": message
+    }
+
+    try:
+
+        response = requests.post(
+            API_URL,
+            headers=headers,
+            json=payload,
+            timeout=30
+        )
+
+        print("================================")
+        print("PHONE:", phone)
+        print("STATUS:", response.status_code)
+        print("RESPONSE:", response.text)
+
+        return response
+
+    except Exception as e:
+
+        print("WHATSAPP ERROR:", e)
+        return None
+    
 
 # ================= HOME =================
 
@@ -1074,7 +1125,6 @@ def confirm_order():
 
 
 
-
 @app.route('/payment-success/<mode>')
 def payment_success(mode):
 
@@ -1105,19 +1155,19 @@ def payment_success(mode):
 
         order_status = response.data.order_status
 
-        # ================= PAYMENT FAILED/CANCELLED =================
         if order_status != "PAID":
-
             return redirect('/cart')
 
-        # ================= PAYMENT SUCCESS =================
+        # ================= DB =================
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
 
-        # DEFAULT ADDRESS
+        # ================= ADDRESS =================
         cursor.execute("""
-            SELECT * FROM addresses
-            WHERE username=%s AND is_default=1
+            SELECT *
+            FROM addresses
+            WHERE username=%s
+            AND is_default=1
         """, (username,))
 
         address = cursor.fetchone()
@@ -1125,17 +1175,58 @@ def payment_success(mode):
         if not address:
             return redirect('/place-all-order')
 
-        # CART ITEMS
+        # ================= CART ITEMS =================
         cursor.execute("""
-            SELECT * FROM cart
+            SELECT *
+            FROM cart
             WHERE username=%s
         """, (username,))
 
         cart_items = cursor.fetchall()
 
+        # ================= WHATSAPP DATA =================
+        order_text = ""
+        grand_total = 0
+        first_product_image = ""
+
         for item in cart_items:
 
-            # INSERT ORDER
+            # ================= PRODUCT DETAILS =================
+            cursor.execute("""
+                SELECT
+                    p.*,
+                    (
+                        SELECT image
+                        FROM product_images
+                        WHERE product_id = p.id
+                        LIMIT 1
+                    ) AS image
+                FROM products p
+                WHERE p.id=%s
+            """, (item['product_id'],))
+
+            product = cursor.fetchone()
+
+            if product:
+
+                amount = float(product['price']) * int(item['quantity'])
+                grand_total += amount
+
+                size = item.get('size', 'N/A')
+
+                order_text += f"""
+🛍 Product: {product['name']}
+✨ Design: {product.get('sub_name', '')}
+📏 Size: {size}
+🔢 Qty: {item['quantity']}
+💰 Amount: ₹{amount}
+
+"""
+
+                if not first_product_image and product.get('image'):
+                    first_product_image = product['image']
+
+            # ================= INSERT ORDER =================
             cursor.execute("""
                 INSERT INTO orders(
                     username,
@@ -1154,7 +1245,10 @@ def payment_success(mode):
                     payment_mode,
                     order_status
                 )
-                VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'Confirmed')
+                VALUES(
+                    %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,
+                    'Confirmed'
+                )
             """, (
                 username,
                 item['product_id'],
@@ -1174,7 +1268,7 @@ def payment_success(mode):
 
             order_id = cursor.lastrowid
 
-            # INSERT ORDER ITEMS
+            # ================= INSERT ORDER ITEMS =================
             cursor.execute("""
                 INSERT INTO order_items(
                     order_id,
@@ -1193,7 +1287,9 @@ def payment_success(mode):
                     landmark,
                     payment_mode
                 )
-                VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                VALUES(
+                    %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s
+                )
             """, (
                 order_id,
                 username,
@@ -1212,7 +1308,7 @@ def payment_success(mode):
                 mode
             ))
 
-            # REDUCE STOCK
+            # ================= REDUCE STOCK =================
             cursor.execute("""
                 UPDATE products
                 SET quantity = quantity - %s
@@ -1222,7 +1318,53 @@ def payment_success(mode):
                 item['product_id']
             ))
 
-        # CLEAR CART
+        # ================= WHATSAPP MESSAGE =================
+
+        message = f"""
+🌸 Akki Latest Collections 🌸
+
+Dear {address['full_name']},
+
+Thank you for shopping with us.
+
+Your order has been confirmed successfully. ✅
+
+━━━━━━━━━━━━━━━
+ORDER DETAILS
+━━━━━━━━━━━━━━━
+
+{order_text}
+
+💵 Total Amount: ₹{grand_total}
+
+🚚 Our team is preparing your order and it will be dispatched soon.
+
+Thank you for choosing Akki Latest Collections.
+
+❤️ We look forward to serving you again.
+
+Warm Regards,
+Akki Latest Collections
+www.akkilatestcollections.com
+"""
+
+        try:
+
+            image_url = ""
+
+            if first_product_image:
+                image_url = f"https://akkilatestcollections.com/static/uploads/{first_product_image}"
+
+            send_whatsapp(
+                  address['phone'],
+                  message,
+                  image_url
+            )
+
+        except Exception as whatsapp_error:
+            print("WHATSAPP ERROR:", whatsapp_error)
+
+        # ================= CLEAR CART =================
         cursor.execute("""
             DELETE FROM cart
             WHERE username=%s
@@ -1266,6 +1408,7 @@ def payment_success(mode):
         print("PAYMENT VERIFY ERROR:", e)
 
         return redirect('/cart')
+
 
 
 # ================= ADMIN LOGIN PAGE =================
@@ -2048,6 +2191,72 @@ def admin_booking_orders():
     )
 
 
+@app.route('/parcel-order/<int:id>')
+def parcel_order(id):
+
+    if 'admin' not in session:
+        return redirect('/admin')
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # GET ORDER + PRODUCT DETAILS
+    cursor.execute("""
+        SELECT
+            o.*,
+            p.name AS product_name
+        FROM orders o
+        LEFT JOIN products p
+            ON o.product_id = p.id
+        WHERE o.id=%s
+    """, (id,))
+
+    order = cursor.fetchone()
+
+    if not order:
+        conn.close()
+        return redirect('/admin-booking-orders')
+
+    # UPDATE STATUS
+    cursor.execute("""
+        UPDATE orders
+        SET order_status='Parcelled'
+        WHERE id=%s
+    """, (id,))
+
+    conn.commit()
+
+    # SEND WHATSAPP
+    try:
+
+        message = f"""
+📦 Akki Latest Collections
+
+Dear {order['full_name']},
+
+Good News! 🎉
+
+Your product has been parcelled successfully.
+
+🛍 Product : {order['product_name']}
+📦 Quantity : {order['quantity']}
+
+Your parcel is now ready for dispatch and will reach you soon.
+
+Thank you for shopping with Akki Latest Collections ❤️
+
+Regards,
+Akki Latest Collections
+"""
+
+        send_whatsapp(order['phone'],message)
+
+    except Exception as e:
+        print("WHATSAPP ERROR:", e)
+
+    conn.close()
+
+    return redirect('/admin-booking-orders')
 
 
 
@@ -2138,12 +2347,232 @@ def admin_completed_orders():
 
 
 
+@app.route('/admin-whatsapp')
+def admin_whatsapp():
+
+    if 'admin' not in session:
+        return redirect('/admin')
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT COUNT(DISTINCT phone) AS total
+        FROM orders
+        WHERE phone IS NOT NULL
+        AND phone != ''
+    """)
+
+    result = cursor.fetchone()
+
+    total_customers = result['total']
+
+    conn.close()
+
+    return render_template(
+        'admin_whatsapp.html',
+        total_customers=total_customers
+    )
+
+
+@app.route('/send-whatsapp-offer', methods=['POST'])
+def send_whatsapp_offer():
+
+    if 'admin' not in session:
+        return redirect('/admin')
+
+    user_message = request.form['message']
+
+    message = f"""
+🌸 Akki Latest Collections 🌸
+
+{user_message}
+
+━━━━━━━━━━━━━━━━━━
+
+🛍 Shop Now:
+https://akkilatestcollections.com
+
+Thank you for choosing Akki Latest Collections ❤️
+
+━━━━━━━━━━━━━━━━━━
+"""
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT DISTINCT phone
+        FROM orders
+        WHERE phone IS NOT NULL
+        AND phone != ''
+    """)
+
+    customers = cursor.fetchall()
+
+    sent_count = 0
+    failed_count = 0
+
+    for customer in customers:
+
+        phone = str(customer['phone']).strip()
+
+        try:
+
+            response = send_whatsapp(
+                phone,
+                message
+            )
+
+            if response and response.status_code == 200:
+                sent_count += 1
+            else:
+                failed_count += 1
+
+            # Wasender protection
+            time.sleep(5)
+
+        except Exception as e:
+
+            failed_count += 1
+
+            print(
+                f"WhatsApp Error ({phone}):",
+                e
+            )
+
+    conn.close()
+
+    return f"""
+    <html>
+    <head>
+        <title>WhatsApp Sent</title>
+
+        <style>
+            body {{
+                font-family: Arial;
+                text-align: center;
+                padding-top: 100px;
+                background: #f5f5f5;
+            }}
+
+            .box {{
+                background: white;
+                width: 500px;
+                margin: auto;
+                padding: 30px;
+                border-radius: 10px;
+                box-shadow: 0 0 10px rgba(0,0,0,.1);
+            }}
+
+            .success {{
+                color: green;
+            }}
+
+            .failed {{
+                color: red;
+            }}
+
+            a {{
+                display:inline-block;
+                margin-top:20px;
+                background:#25D366;
+                color:white;
+                padding:10px 20px;
+                text-decoration:none;
+                border-radius:6px;
+            }}
+        </style>
+    </head>
+
+    <body>
+
+        <div class="box">
+
+            <h2>WhatsApp Broadcast Completed</h2>
+
+            <h3 class="success">
+                Successfully Sent : {sent_count}
+            </h3>
+
+            <h3 class="failed">
+                Failed : {failed_count}
+            </h3>
+
+            <a href="/admin-whatsapp">
+                Back
+            </a>
+
+        </div>
+
+    </body>
+    </html>
+    """
 
 
 
 
+@app.route('/admin-reports')
+def admin_reports():
 
+    if 'admin' not in session:
+        return redirect('/admin')
 
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # TODAY SALES
+    cursor.execute("""
+        SELECT
+            COUNT(*) AS orders,
+            COALESCE(SUM(p.price * o.quantity),0) AS amount
+        FROM orders o
+        JOIN products p
+            ON o.product_id = p.id
+        WHERE DATE(o.created_at)=CURDATE()
+    """)
+    today = cursor.fetchone()
+
+    # MONTH SALES
+    cursor.execute("""
+        SELECT
+            COUNT(*) AS orders,
+            COALESCE(SUM(p.price * o.quantity),0) AS amount
+        FROM orders o
+        JOIN products p
+            ON o.product_id = p.id
+        WHERE MONTH(o.created_at)=MONTH(CURDATE())
+        AND YEAR(o.created_at)=YEAR(CURDATE())
+    """)
+    month = cursor.fetchone()
+
+    # TOP PRODUCTS
+    cursor.execute("""
+        SELECT
+            p.name,
+            SUM(o.quantity) AS qty
+        FROM orders o
+        JOIN products p
+            ON o.product_id = p.id
+        GROUP BY o.product_id
+        ORDER BY qty DESC
+        LIMIT 10
+    """)
+    top_products = cursor.fetchall()
+
+    labels = [p['name'] for p in top_products]
+    values = [int(p['qty']) for p in top_products]
+
+    conn.close()
+
+    return render_template(
+        'admin_reports.html',
+        today=today,
+        month=month,
+        top_products=top_products,
+        labels=labels,
+        values=values
+    )
 
 
 

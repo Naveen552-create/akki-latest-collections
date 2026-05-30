@@ -368,14 +368,11 @@ No Image
 
 <td rowspan="{{ grouped[o.phone]|length }}">
 
-<a href="/complete-order/{{ o.id }}">
-
-<button class="complete">
-
-Parcel Complete
-
-</button>
-
+<a href="/parcel-order/{{ o.id }}"
+   onclick="return confirm('Mark this order as Parcelled?')">
+    <button class="complete">
+        Parcel Order
+    </button>
 </a>
 
 <br>
