@@ -71,11 +71,10 @@ API_URL = "https://wasenderapi.com/api/send-message"
 API_KEY = "ead64fbba18e5edaf80f605b0d63a41e5231488d07159726523474275b617340"
 
 
-def send_whatsapp(number, message):
+def send_whatsapp(number, message, image_url=""):
 
     phone = str(number).strip()
 
-    # Add India country code
     if not phone.startswith("91"):
         phone = "91" + phone
 
@@ -89,27 +88,20 @@ def send_whatsapp(number, message):
         "text": message
     }
 
-    try:
+    if image_url:
+        payload["image_url"] = image_url
 
-        response = requests.post(
-            API_URL,
-            headers=headers,
-            json=payload,
-            timeout=30
-        )
+    response = requests.post(
+        API_URL,
+        headers=headers,
+        json=payload,
+        timeout=30
+    )
 
-        print("================================")
-        print("PHONE:", phone)
-        print("STATUS:", response.status_code)
-        print("RESPONSE:", response.text)
+    print("STATUS:", response.status_code)
+    print("RESPONSE:", response.text)
 
-        return response
-
-    except Exception as e:
-
-        print("WHATSAPP ERROR:", e)
-        return None
-    
+    return response  
 
 # ================= HOME =================
 
@@ -1353,7 +1345,10 @@ www.akkilatestcollections.com
             image_url = ""
 
             if first_product_image:
-                image_url = f"https://akkilatestcollections.com/static/uploads/{first_product_image}"
+                image_url = (
+                           f"https://akkilatestcollections.com/static/uploads/"
+                           f"{first_product_image}"
+                        )
 
             send_whatsapp(
                   address['phone'],
