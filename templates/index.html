@@ -1447,10 +1447,12 @@ onclick="outsideClose(event)">
         <div class="card">
 
 {% if product.images %}
+    <a href="/product/{{ product.id }}">
     <img src="{{ url_for('static', filename=product.images[0]) }}"
          loading="lazy"
          decoding="async"
          alt="{{ product.name }}">
+    </a>
 {% endif %}
 
             <div class="card-content">
