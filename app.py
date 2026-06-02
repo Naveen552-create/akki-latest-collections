@@ -106,35 +106,7 @@ def send_whatsapp(number, message, image_url=""):
     return response  
 
 # ================= HOME =================
-
 from datetime import datetime
-
-def publish_products():
-    conn = None
-    cursor = None
-
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        cursor.execute("""
-            UPDATE products
-            SET is_private = 0
-            WHERE is_private = 1
-            AND publish_at <= NOW()
-        """)
-
-        conn.commit()
-
-    except Exception as e:
-        print("publish_products error:", e)
-
-    finally:
-        if cursor:
-            cursor.close()
-        if conn and conn.is_connected():
-            conn.close()
-
 
 @app.route('/')
 def home():
@@ -143,12 +115,11 @@ def home():
     cursor = None
 
     try:
-        # Optional: comment this line if not absolutely required
-        publish_products()
 
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
 
+        # Carousel Images
         cursor.execute("""
             SELECT *
             FROM carousel
@@ -156,6 +127,7 @@ def home():
         """)
         carousel_items = cursor.fetchall()
 
+        # Products
         cursor.execute("""
             SELECT
                 p.id,
@@ -201,9 +173,9 @@ def home():
         if 'user' in session:
 
             cursor.execute("""
-                SELECT COALESCE(SUM(quantity),0) AS total
+                SELECT COALESCE(SUM(quantity), 0) AS total
                 FROM cart
-                WHERE username=%s
+                WHERE username = %s
             """, (session['user'],))
 
             result = cursor.fetchone()
@@ -219,7 +191,9 @@ def home():
         )
 
     except Exception as e:
+
         print("HOME ERROR:", e)
+
         return render_template(
             'index.html',
             products=[],
@@ -228,6 +202,7 @@ def home():
         )
 
     finally:
+
         if cursor:
             cursor.close()
 
@@ -382,7 +357,7 @@ def logout():
 @app.route('/product/<int:id>')
 def product_details(id):
 
-    publish_products()
+
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -1583,27 +1558,37 @@ def too_large(e):
     return "Upload too large. Please upload smaller images.", 413
 
 # ================= IMAGE OPTIMIZER =================
+
 def save_optimized_image(file, upload_folder):
 
-    img = Image.open(file)
+    try:
 
-    if img.mode in ("RGBA", "P"):
-        img = img.convert("RGB")
+        img = Image.open(file)
 
-    img.thumbnail((1200, 1200))
+        if img.mode in ("RGBA", "P"):
+            img = img.convert("RGB")
 
-    filename = f"{uuid.uuid4().hex}.webp"
+        img.thumbnail((1200, 1200))
 
-    filepath = os.path.join(upload_folder, filename)
+        filename = f"{uuid.uuid4().hex}.webp"
 
-    img.save(
-        filepath,
-        "WEBP",
-        quality=70,
-        optimize=True
-    )
+        filepath = os.path.join(
+            upload_folder,
+            filename
+        )
 
-    return f"uploads/{filename}"
+        img.save(
+            filepath,
+            "WEBP",
+            quality=75,
+            optimize=True
+        )
+
+        return f"uploads/{filename}"
+
+    except Exception as e:
+        print("Image Save Error:", e)
+        return None
 
 
 @app.route('/add-product', methods=['POST'])
@@ -1715,6 +1700,7 @@ def manage_products():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
+    # Products + Images
     cursor.execute("""
         SELECT
             p.*,
@@ -1723,6 +1709,7 @@ def manage_products():
             GROUP_CONCAT(
                 DISTINCT pi.image
                 ORDER BY pi.id ASC
+                SEPARATOR '||'
             ) AS images
         FROM products p
         LEFT JOIN categories c
@@ -1732,33 +1719,47 @@ def manage_products():
         LEFT JOIN product_images pi
             ON p.id = pi.product_id
         GROUP BY p.id
-        ORDER BY
-            CASE
-                WHEN p.quantity = 0 THEN 0
-                ELSE 1
-            END,
-            p.id DESC
+        ORDER BY p.id DESC
     """)
 
     products = cursor.fetchall()
 
+    # Get all sizes in one query
+    cursor.execute("""
+        SELECT
+            product_id,
+            size,
+            price,
+            quantity
+        FROM product_sizes
+        ORDER BY id ASC
+    """)
+
+    all_sizes = cursor.fetchall()
+
+    size_map = {}
+
+    for row in all_sizes:
+
+        pid = row['product_id']
+
+        if pid not in size_map:
+            size_map[pid] = []
+
+        size_map[pid].append({
+            'size': row['size'],
+            'price': row['price'],
+            'quantity': row['quantity']
+        })
+
     for product in products:
 
-        product['images'] = (
-            product['images'].split(',')
-            if product['images']
-            else []
-        )
+        if product['images']:
+            product['images'] = product['images'].split('||')
+        else:
+            product['images'] = []
 
-        # fetch sizes
-        cursor.execute("""
-            SELECT size,price,quantity
-            FROM product_sizes
-            WHERE product_id=%s
-            ORDER BY id ASC
-        """,(product['id'],))
-
-        product['sizes']=cursor.fetchall()
+        product['sizes'] = size_map.get(product['id'], [])
 
     cursor.close()
     conn.close()
@@ -1767,7 +1768,6 @@ def manage_products():
         'manage_products.html',
         products=products
     )
-
 
 
 # ================= DELETE PRODUCT =================
