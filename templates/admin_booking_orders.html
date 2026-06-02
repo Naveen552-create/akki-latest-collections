@@ -164,6 +164,7 @@ th{
     margin:0.4cm;
 }
 
+
 @media print {
 
     @page {
@@ -171,11 +172,12 @@ th{
         margin: 0;
     }
 
-    body {
+    html, body {
         margin: 0;
         padding: 0;
     }
 
+    /* ❌ Hide everything except print area */
     body * {
         visibility: hidden;
     }
@@ -184,44 +186,44 @@ th{
         visibility: visible;
     }
 
+    /* 🔥 FIX POSITIONING (LEFT TOP START) */
     #printArea {
         position: absolute;
         top: 0;
         left: 0;
         width: 9.9cm;
         height: 7.4cm;
-        padding: 6px;
-        font-size: 11px;
+        padding: 4mm;
         box-sizing: border-box;
+
         font-family: Arial;
+        font-size: 13px; /* 🔥 increased for thermal readability */
+
+        overflow: hidden;
     }
 
     .sticker {
         width: 100%;
-    }
-
-    h4 {
-        margin: 0 0 3px 0;
-        font-size: 12px;
-        border-bottom: 1px solid #000;
-        padding-bottom: 2px;
+        height: 100%;
     }
 
     .from, .to {
-        margin-bottom: 6px;
+        line-height: 1.25;
+        margin-bottom: 4px;
     }
 
-    .from div, .to div {
-        line-height: 1.3;
-        margin-bottom: 2px;
+    .from b, .to b {
+        font-size: 14px;
     }
 
-    hr {
-        border: none;
+    .dash {
         border-top: 1px dashed #000;
-        margin: 5px 0;
+        margin: 4px 0;
     }
 }
+
+
+
 /* MOBILE */
 
 @media(max-width:768px){
@@ -455,7 +457,6 @@ function closePopup(){
 
 /* ADDRESS PRINT */
 
-
 function printAddress(
     name,
     phone,
@@ -467,39 +468,42 @@ function printAddress(
     pincode
 ){
 
-    let content = `
+    const content = `
         <div class="sticker">
 
             <div class="from">
-                <h4>FROM :</h4>
-                <div>Akki Latest Collections</div>
-                <div>C/O Palangi DTDC</div>
-                <div>E.G.DT, Andhra Pradesh - 534216</div>
-                <div>PH - 8247025557</div>
+                <b>FROM :</b><br>
+                Akki Latest Collections<br>
+                C/O Palangi DTDC<br>
+                E.G.DT, Andhra Pradesh - 534216<br>
+                PH - 8247025557
             </div>
 
-            <hr>
+            <div class="dash"></div>
 
             <div class="to">
-                <h4>TO :</h4>
-                <div><b>${name}</b></div>
-                <div>${phone}</div>
-                <div>${email}</div>
-                <div>${landmark}</div>
-                <div>${city}</div>
-                <div>${state}</div>
-                <div>${country}</div>
-                <div>${pincode}</div>
+                <b>TO :</b><br>
+                <b>${name}</b><br>
+                ${phone}<br>
+                ${email}<br>
+                ${landmark}<br>
+                ${city}<br>
+                ${state}<br>
+                ${country}<br>
+                ${pincode}
             </div>
 
         </div>
     `;
 
-    document.getElementById("printArea").innerHTML = content;
+    const printArea = document.getElementById("printArea");
+
+    // 🔥 FORCE SINGLE CONTENT ONLY
+    printArea.innerHTML = content;
 
     window.print();
 
-    window.onafterprint = function () {
+    window.onafterprint = () => {
         location.reload();
     };
 }
