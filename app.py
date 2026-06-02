@@ -457,34 +457,55 @@ def product_details(id):
 @app.route("/search-products")
 def search_products():
 
-    keyword = request.args.get("q")
+    keyword = request.args.get("q", "").strip()
 
     db = get_db_connection()
     cursor = db.cursor(dictionary=True)
 
-    # SAVE SEARCH
-    cursor.execute("""
-        INSERT INTO search_reports(keyword)
-        VALUES(%s)
-    """,(keyword,))
+    try:
+        # ---------------------------
+        # SAVE SEARCH (SAFE)
+        # ---------------------------
+        if keyword:
+            cursor.execute("""
+                INSERT INTO search_reports(keyword)
+                VALUES(%s)
+            """, (keyword,))
+            db.commit()
 
-    db.commit()
+        # ---------------------------
+        # SEARCH PRODUCTS (FIXED JOIN)
+        # ---------------------------
+        cursor.execute("""
+            SELECT 
+                p.*
+            FROM products p
+            LEFT JOIN categories c 
+                ON p.category_id = c.id
+            LEFT JOIN subcategories s 
+                ON p.subcategory_id = s.id
+            WHERE 
+                p.name LIKE %s
+                OR c.name LIKE %s
+                OR s.name LIKE %s
+        """, (
+            f"%{keyword}%",
+            f"%{keyword}%",
+            f"%{keyword}%"
+        ))
 
-    # SEARCH PRODUCTS
-    cursor.execute("""
-        SELECT * FROM products
-        WHERE category LIKE %s
-        OR subcategory LIKE %s
-        OR name LIKE %s
-    """,(
-        f"%{keyword}%",
-        f"%{keyword}%",
-        f"%{keyword}%"
-    ))
+        products = cursor.fetchall()
 
-    products = cursor.fetchall()
+        return jsonify(products)
 
-    return jsonify(products)
+    except Exception as e:
+        print("Search error:", e)
+        return jsonify({"error": "Search failed"}), 500
+
+    finally:
+        cursor.close()
+        db.close()
+
 
 @app.route('/material/<material_name>')
 def material_products(material_name):
