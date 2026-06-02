@@ -176,7 +176,6 @@ th{
         padding: 0;
     }
 
-    /* Only print area visible */
     body * {
         visibility: hidden;
     }
@@ -191,22 +190,38 @@ th{
         left: 0;
         width: 9.9cm;
         height: 7.4cm;
-        padding: 8px;
-        font-size: 14px;
+        padding: 6px;
+        font-size: 11px;
+        box-sizing: border-box;
+        font-family: Arial;
     }
 
     .sticker {
-        text-align: left;
-        font-family: Arial;
-        font-weight: 500;
-        line-height: 1.5;
+        width: 100%;
     }
 
-    .line {
-        margin-bottom: 3px;
+    h4 {
+        margin: 0 0 3px 0;
+        font-size: 12px;
+        border-bottom: 1px solid #000;
+        padding-bottom: 2px;
+    }
+
+    .from, .to {
+        margin-bottom: 6px;
+    }
+
+    .from div, .to div {
+        line-height: 1.3;
+        margin-bottom: 2px;
+    }
+
+    hr {
+        border: none;
+        border-top: 1px dashed #000;
+        margin: 5px 0;
     }
 }
-
 /* MOBILE */
 
 @media(max-width:768px){
@@ -440,6 +455,7 @@ function closePopup(){
 
 /* ADDRESS PRINT */
 
+
 function printAddress(
     name,
     phone,
@@ -453,14 +469,29 @@ function printAddress(
 
     let content = `
         <div class="sticker">
-            <div class="line"><b>${name}</b></div>
-            <div class="line">${phone}</div>
-            <div class="line">${email}</div>
-            <div class="line">${landmark}</div>
-            <div class="line">${city}</div>
-            <div class="line">${state}</div>
-            <div class="line">${country}</div>
-            <div class="line">${pincode}</div>
+
+            <div class="from">
+                <h4>FROM :</h4>
+                <div>Akki Latest Collections</div>
+                <div>C/O Palangi DTDC</div>
+                <div>E.G.DT, Andhra Pradesh - 534216</div>
+                <div>PH - 8247025557</div>
+            </div>
+
+            <hr>
+
+            <div class="to">
+                <h4>TO :</h4>
+                <div><b>${name}</b></div>
+                <div>${phone}</div>
+                <div>${email}</div>
+                <div>${landmark}</div>
+                <div>${city}</div>
+                <div>${state}</div>
+                <div>${country}</div>
+                <div>${pincode}</div>
+            </div>
+
         </div>
     `;
 
@@ -472,6 +503,7 @@ function printAddress(
         location.reload();
     };
 }
+
 
 </script>
 
