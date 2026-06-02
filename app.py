@@ -14,7 +14,6 @@ from cashfree_pg.models.order_meta import OrderMeta
 import uuid
 from flask import flash
 import requests
-from threading import Thread
 
 
 app = Flask(__name__)
@@ -2361,33 +2360,6 @@ def admin_completed_orders():
 
 
 
-def send_whatsapp(phone, message):
-
-    try:
-
-        payload = {
-            "phone": phone,
-            "message": message
-        }
-
-        response = requests.post(
-            API_URL,
-            json=payload,
-            timeout=15
-        )
-
-        print("STATUS:", response.status_code)
-        print("RESPONSE:", response.text)
-
-        # Always return JSON safely
-        try:
-            return response.json()
-        except:
-            return None
-
-    except Exception as e:
-        print("WHATSAPP ERROR:", e)
-        return None
 
 
 @app.route('/admin-whatsapp')
@@ -2406,7 +2378,9 @@ def admin_whatsapp():
         AND phone != ''
     """)
 
-    total_customers = cursor.fetchone()['total']
+    result = cursor.fetchone()
+
+    total_customers = result['total']
 
     conn.close()
 
@@ -2416,40 +2390,13 @@ def admin_whatsapp():
     )
 
 
-
-def send_bulk_whatsapp(customers, message):
-
-    sent_count = 0
-    failed_count = 0
-
-    for customer in customers:
-
-        phone = str(customer['phone']).strip()
-
-        try:
-            response = send_whatsapp(phone, message)
-
-            if response and response.get("success"):
-                sent_count += 1
-            else:
-                failed_count += 1
-
-        except Exception as e:
-            print("WhatsApp Error:", e)
-            failed_count += 1
-
-    print("DONE SENDING")
-    print("Sent:", sent_count)
-    print("Failed:", failed_count)
-
-
 @app.route('/send-whatsapp-offer', methods=['POST'])
 def send_whatsapp_offer():
 
     if 'admin' not in session:
         return redirect('/admin')
 
-    user_message = request.form.get('message', '')
+    user_message = request.form['message']
 
     message = f"""
 🌸 Akki Latest Collections 🌸
@@ -2478,27 +2425,105 @@ Thank you for choosing Akki Latest Collections ❤️
 
     customers = cursor.fetchall()
 
+    sent_count = 0
+    failed_count = 0
+
+    for customer in customers:
+
+        phone = str(customer['phone']).strip()
+
+        try:
+
+            response = send_whatsapp(
+                phone,
+                message
+            )
+
+            if response and response.status_code == 200:
+                sent_count += 1
+            else:
+                failed_count += 1
+
+            # Wasender protection
+            time.sleep(5)
+
+        except Exception as e:
+
+            failed_count += 1
+
+            print(
+                f"WhatsApp Error ({phone}):",
+                e
+            )
+
     conn.close()
 
-    # 🔥 RUN IN BACKGROUND (IMPORTANT)
-    Thread(
-        target=send_bulk_whatsapp,
-        args=(customers, message)
-    ).start()
-
-    return """
+    return f"""
     <html>
-    <body style="font-family:Arial;text-align:center;padding-top:100px;">
-        <h2 style="color:green;">
-            WhatsApp Broadcast Started 🚀
-        </h2>
-        <p>
-            Messages are sending in background.
-        </p>
-        <a href="/admin-whatsapp">Back</a>
+    <head>
+        <title>WhatsApp Sent</title>
+
+        <style>
+            body {{
+                font-family: Arial;
+                text-align: center;
+                padding-top: 100px;
+                background: #f5f5f5;
+            }}
+
+            .box {{
+                background: white;
+                width: 500px;
+                margin: auto;
+                padding: 30px;
+                border-radius: 10px;
+                box-shadow: 0 0 10px rgba(0,0,0,.1);
+            }}
+
+            .success {{
+                color: green;
+            }}
+
+            .failed {{
+                color: red;
+            }}
+
+            a {{
+                display:inline-block;
+                margin-top:20px;
+                background:#25D366;
+                color:white;
+                padding:10px 20px;
+                text-decoration:none;
+                border-radius:6px;
+            }}
+        </style>
+    </head>
+
+    <body>
+
+        <div class="box">
+
+            <h2>WhatsApp Broadcast Completed</h2>
+
+            <h3 class="success">
+                Successfully Sent : {sent_count}
+            </h3>
+
+            <h3 class="failed">
+                Failed : {failed_count}
+            </h3>
+
+            <a href="/admin-whatsapp">
+                Back
+            </a>
+
+        </div>
+
     </body>
     </html>
-    """
+    """ 
+
 
 
 
