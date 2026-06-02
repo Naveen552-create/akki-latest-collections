@@ -165,61 +165,96 @@ th{
 }
 
 
-@media print {
+/* PRINT SETTINGS */
 
-    @page {
-        size: 9.9cm 7.4cm;
-        margin: 0;
+@media print{
+
+    @page{
+        size: 10cm 7.5cm;   /* sticker size */
+        margin:0;
     }
 
-    html, body {
-        margin: 0;
-        padding: 0;
+    html,
+    body{
+        margin:0;
+        padding:0;
+        width:100%;
+        height:100%;
     }
 
-    /* ❌ Hide everything except print area */
-    body * {
-        visibility: hidden;
+    body *{
+        visibility:hidden;
     }
 
-    #printArea, #printArea * {
-        visibility: visible;
+    #printArea,
+    #printArea *{
+        visibility:visible;
     }
 
-    /* 🔥 FIX POSITIONING (LEFT TOP START) */
-    #printArea {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 9.9cm;
-        height: 7.4cm;
-        padding: 4mm;
-        box-sizing: border-box;
+    #printArea{
 
-        font-family: Arial;
-        font-size: 13px; /* 🔥 increased for thermal readability */
+        position:fixed;
 
-        overflow: hidden;
+        left:0;
+        top:0;
+
+        width:10cm;
+        height:7.5cm;
+
+        padding:6mm;
+
+        box-sizing:border-box;
+
+        overflow:hidden;
+
+        font-family:Arial,sans-serif;
+
+        font-size:16px;
+
+        line-height:1.35;
+
+        background:white;
+
     }
 
-    .sticker {
-        width: 100%;
-        height: 100%;
+    .sticker{
+
+        width:100%;
+        height:100%;
+
+        text-align:left;
+
     }
 
-    .from, .to {
-        line-height: 1.25;
-        margin-bottom: 4px;
+    .from{
+
+        font-size:15px;
+
+        margin-bottom:5px;
+
     }
 
-    .from b, .to b {
-        font-size: 14px;
+    .to{
+
+        font-size:17px;
+
     }
 
-    .dash {
-        border-top: 1px dashed #000;
-        margin: 4px 0;
+    .from b,
+    .to b{
+
+        font-size:19px;
+
     }
+
+    .dash{
+
+        border-top:1px dashed black;
+
+        margin:6px 0;
+
+    }
+
 }
 
 
@@ -456,58 +491,71 @@ function closePopup(){
 }
 
 /* ADDRESS PRINT */
-
 function printAddress(
-    name,
-    phone,
-    email,
-    landmark,
-    city,
-    state,
-    country,
-    pincode
+name,
+phone,
+email,
+landmark,
+city,
+state,
+country,
+pincode
 ){
 
-    const content = `
-        <div class="sticker">
+const printArea =
+document.getElementById("printArea");
 
-            <div class="from">
-                <b>FROM :</b><br>
-                Akki Latest Collections<br>
-                C/O Palangi DTDC<br>
-                E.G.DT, Andhra Pradesh - 534216<br>
-                PH - 8247025557
-            </div>
+printArea.innerHTML=`
 
-            <div class="dash"></div>
+<div class="sticker">
 
-            <div class="to">
-                <b>TO :</b><br>
-                <b>${name}</b><br>
-                ${phone}<br>
-                ${email}<br>
-                ${landmark}<br>
-                ${city}<br>
-                ${state}<br>
-                ${country}<br>
-                ${pincode}
-            </div>
+<div class="from">
 
-        </div>
-    `;
+<b>FROM :</b><br>
 
-    const printArea = document.getElementById("printArea");
+Akki Latest Collections<br>
 
-    // 🔥 FORCE SINGLE CONTENT ONLY
-    printArea.innerHTML = content;
+C/O Palangi DTDC<br>
 
-    window.print();
+E.G.DT, Andhra Pradesh - 534216<br>
 
-    window.onafterprint = () => {
-        location.reload();
-    };
+PH : 8247025557
+
+</div>
+
+<div class="dash"></div>
+
+<div class="to">
+
+<b>TO :</b><br>
+
+<b>${name}</b><br>
+
+${phone}<br>
+
+${email}<br>
+
+${landmark}<br>
+
+${city}<br>
+
+${state}<br>
+
+${country} - ${pincode}
+
+</div>
+
+</div>
+
+`;
+
+setTimeout(()=>{
+
+window.print();
+
+},200);
+
 }
-
 
 </script>
 
