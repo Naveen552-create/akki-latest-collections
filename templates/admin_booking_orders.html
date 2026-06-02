@@ -164,51 +164,46 @@ th{
     margin:0.4cm;
 }
 
-@media print{
+@media print {
 
-    body *{
-        visibility:hidden;
+    @page {
+        size: 9.9cm 7.4cm;
+        margin: 0;
     }
 
-    #printArea,
-    #printArea *{
-        visibility:visible;
+    body {
+        margin: 0;
+        padding: 0;
     }
 
-    #printArea{
-        position:absolute;
-        top:0;
-        left:0;
-        width:100%;
-
-        font-size:22px;
-        line-height:1.8;
-
-        padding:20px;
-
-        font-family:Arial,sans-serif;
-        font-weight:bold;
+    /* Only print area visible */
+    body * {
+        visibility: hidden;
     }
 
-    #printArea h3{
-        font-size:28px;
-        margin-bottom:12px;
-        color:black;
+    #printArea, #printArea * {
+        visibility: visible;
     }
 
-    #printArea p{
-        font-size:22px;
-        margin-bottom:18px;
+    #printArea {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 9.9cm;
+        height: 7.4cm;
+        padding: 8px;
+        font-size: 14px;
     }
 
-    #printArea hr{
-        margin:20px 0;
-        border:2px dashed black;
+    .sticker {
+        text-align: left;
+        font-family: Arial;
+        font-weight: 500;
+        line-height: 1.5;
     }
 
-    button,
-    a{
-        display:none;
+    .line {
+        margin-bottom: 3px;
     }
 }
 
@@ -456,62 +451,26 @@ function printAddress(
     pincode
 ){
 
-    let content=`
-
-        <h3>FROM :</h3>
-
-        <p>
-
-        ${name}<br>
-
-        ${phone}<br>
-
-        ${email}<br>
-
-        ${landmark}<br>
-
-        ${city}<br>
-
-        ${state}<br>
-
-        ${country}<br>
-
-        ${pincode}
-
-        </p>
-
-        <hr>
-
-        <h3>TO :</h3>
-
-        <p>
-
-        Akki Latest Collections<br>
-
-        C/O Palangi DTDC<br>
-
-        E.G.DT, Andhra Pradesh - 534216<br>
-
-        PH - 8247025557
-
-        </p>
-
+    let content = `
+        <div class="sticker">
+            <div class="line"><b>${name}</b></div>
+            <div class="line">${phone}</div>
+            <div class="line">${email}</div>
+            <div class="line">${landmark}</div>
+            <div class="line">${city}</div>
+            <div class="line">${state}</div>
+            <div class="line">${country}</div>
+            <div class="line">${pincode}</div>
+        </div>
     `;
 
     document.getElementById("printArea").innerHTML = content;
 
-    /* PRINT */
-
     window.print();
 
-    /* REFRESH AFTER PRINT */
-
-    window.onafterprint = function(){
-
+    window.onafterprint = function () {
         location.reload();
-
     };
-
 }
 
 </script>
