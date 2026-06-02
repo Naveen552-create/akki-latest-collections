@@ -62,7 +62,9 @@ def get_db_connection():
         host="srv1408.hstgr.io",
         user="u372412767_akkiuser",
         password="Akki@2026Secure#552",
-        database="u372412767_akki"
+        database="u372412767_akki",
+        autocommit=True,
+        connection_timeout=30
     )
 
 
@@ -105,105 +107,132 @@ def send_whatsapp(number, message, image_url=""):
 
 # ================= HOME =================
 
-
 from datetime import datetime
 
 def publish_products():
+    conn = None
+    cursor = None
 
-    conn=get_db_connection()
-    cursor=conn.cursor()
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
 
-    cursor.execute("""
-        UPDATE products
-        SET is_private=0
-        WHERE is_private=1
-        AND publish_at<=NOW()
-    """)
+        cursor.execute("""
+            UPDATE products
+            SET is_private = 0
+            WHERE is_private = 1
+            AND publish_at <= NOW()
+        """)
 
-    conn.commit()
-    conn.close()
+        conn.commit()
 
+    except Exception as e:
+        print("publish_products error:", e)
+
+    finally:
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()
 
 
 @app.route('/')
 def home():
 
-    publish_products()   # IMPORTANT
+    conn = None
+    cursor = None
 
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    try:
+        # Optional: comment this line if not absolutely required
+        publish_products()
 
-    cursor.execute("""
-        SELECT *
-        FROM carousel
-        ORDER BY id DESC
-    """)
-    carousel_items = cursor.fetchall()
-
-    cursor.execute("""
-    SELECT
-        p.id,
-        p.name,
-        p.price,
-        p.quantity,
-        c.name AS category,
-        s.name AS subcategory,
-        GROUP_CONCAT(DISTINCT pi.image) AS images
-    FROM products p
-    LEFT JOIN categories c
-        ON p.category_id = c.id
-    LEFT JOIN subcategories s
-        ON p.subcategory_id = s.id
-    LEFT JOIN product_images pi
-        ON p.id = pi.product_id
-    WHERE p.show_home = 1
-    AND p.is_private = 0
-    AND (
-        p.quantity > 0
-        OR EXISTS (
-            SELECT 1
-            FROM product_sizes ps
-            WHERE ps.product_id = p.id
-            AND ps.quantity > 0
-        )
-    )
-    GROUP BY p.id
-    ORDER BY p.id DESC
-""")
-
-    products = cursor.fetchall()
-
-    for product in products:
-        product['images'] = (
-            product['images'].split(',')
-            if product['images']
-            else []
-        )
-
-    cart_count = 0
-
-    if 'user' in session:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
 
         cursor.execute("""
-            SELECT SUM(quantity) AS total
-            FROM cart
-            WHERE username=%s
-        """, (session['user'],))
+            SELECT *
+            FROM carousel
+            ORDER BY id DESC
+        """)
+        carousel_items = cursor.fetchall()
 
-        result = cursor.fetchone()
+        cursor.execute("""
+            SELECT
+                p.id,
+                p.name,
+                p.price,
+                p.quantity,
+                c.name AS category,
+                s.name AS subcategory,
+                GROUP_CONCAT(DISTINCT pi.image) AS images
+            FROM products p
+            LEFT JOIN categories c
+                ON p.category_id = c.id
+            LEFT JOIN subcategories s
+                ON p.subcategory_id = s.id
+            LEFT JOIN product_images pi
+                ON p.id = pi.product_id
+            WHERE p.show_home = 1
+            AND p.is_private = 0
+            AND (
+                p.quantity > 0
+                OR EXISTS (
+                    SELECT 1
+                    FROM product_sizes ps
+                    WHERE ps.product_id = p.id
+                    AND ps.quantity > 0
+                )
+            )
+            GROUP BY p.id
+            ORDER BY p.id DESC
+        """)
 
-        if result and result['total']:
-            cart_count = result['total']
+        products = cursor.fetchall()
 
-    cursor.close()
-    conn.close()
+        for product in products:
+            product['images'] = (
+                product['images'].split(',')
+                if product['images']
+                else []
+            )
 
-    return render_template(
-        'index.html',
-        products=products,
-        carousel_items=carousel_items,
-        cart_count=cart_count
-    )
+        cart_count = 0
+
+        if 'user' in session:
+
+            cursor.execute("""
+                SELECT COALESCE(SUM(quantity),0) AS total
+                FROM cart
+                WHERE username=%s
+            """, (session['user'],))
+
+            result = cursor.fetchone()
+
+            if result:
+                cart_count = result['total']
+
+        return render_template(
+            'index.html',
+            products=products,
+            carousel_items=carousel_items,
+            cart_count=cart_count
+        )
+
+    except Exception as e:
+        print("HOME ERROR:", e)
+        return render_template(
+            'index.html',
+            products=[],
+            carousel_items=[],
+            cart_count=0
+        )
+
+    finally:
+        if cursor:
+            cursor.close()
+
+        if conn and conn.is_connected():
+            conn.close()
 
 # ================= LOGIN =================
 @app.route('/login', methods=['POST'])
