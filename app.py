@@ -64,7 +64,7 @@ def get_db_connection():
         password="Akki@2026Secure#552",
         database="u372412767_akki",
         autocommit=True,
-        connection_timeout=30
+        connection_timeout=5
     )
 
 
